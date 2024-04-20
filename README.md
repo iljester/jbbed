@@ -1,2 +1,2 @@
-# dybb
+# Dybb
 BBCode Editor
