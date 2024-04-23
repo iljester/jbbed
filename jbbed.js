@@ -1,5 +1,5 @@
 /**
- * DyBBCode
+ * jbbed
  * @author Davide Mura (thejester72@gmail.com)
  * (c) 2024
  * @version 1.0
@@ -9,19 +9,19 @@
 
 (function ( $ ) {
 
-  $.fn.dybbcode = function (params = {}) {
+  $.fn.jbbed = function (params = {}) {
 
     // init class
-    let inst = new DyBBcode( $(this), params );
+    let inst = new jbbed( $(this), params );
 
     // add class to textarea
-    $(this).addClass("dybbcode-editor");
+    $(this).addClass("jbbed-editor");
 
     // html containers
-    let main_container    = DyBBcode.mainContainer;
-    let preview_container = DyBBcode.previewContainer;
-    let buttons_container = DyBBcode.buttonsContainer;
-    let emoji_container   = DyBBcode.emojiContainer;
+    let main_container    = jbbed.mainContainer;
+    let preview_container = jbbed.previewContainer;
+    let buttons_container = jbbed.buttonsContainer;
+    let emoji_container   = jbbed.emojiContainer;
 
     // add buttons container
     $(buttons_container).insertBefore(this);
@@ -46,8 +46,8 @@
 
     // add emoji container
     if (inst.emoji !== false) {
-      $(".dybb-buttons-container").append(emoji_container);
-      $(".dybb-emoji-container").prepend('<span class="dybb-toggle close"></span>');
+      $(".jbbed-buttons-container").append(emoji_container);
+      $(".jbbed-emoji-container").prepend('<span class="jbbed-toggle close"></span>');
     }
 
     // add emoji
@@ -68,16 +68,16 @@
 /**
  * Class to build BBCode
  */
-class DyBBcode {
+class jbbed {
   
-  static mainContainer = '<div class="dybbcode-container"></div>';
-  static previewContainer = '<div class="dybb-preview" style="display:none;"></div>';
-  static buttonsContainer = '<div class="dybb-buttons-container"></div>';
-  static emojiContainer = '<div class="dybb-emoji-container"><div></div></div>';
+  static mainContainer = '<div class="jbbed-container"></div>';
+  static previewContainer = '<div class="jbbed-preview" style="display:none;"></div>';
+  static buttonsContainer = '<div class="jbbed-buttons-container"></div>';
+  static emojiContainer = '<div class="jbbed-emoji-container"><div></div></div>';
 
   static defaults = {
     bars: {
-      1: "b|i|u|link|img|hr|ol|ul|li|vid",
+      1: "b|i|u|link|img|hr|ol|ul|li|quote|code|vid",
       2: "size|color|font",
     },
     keepBars: true,
@@ -102,6 +102,8 @@ class DyBBcode {
       color:'span|style="color:$1"',
       link: 'a|href="$1"',
       img:  'img|src="$1"',
+      quote: 'blockquote',
+      code: 'pre'
     },
     filterAttrs: {
       size: "[a-zA-Z0-9]+",
@@ -116,7 +118,7 @@ class DyBBcode {
       rows: 10,
     },
     propPreview: {
-      font: "serif",
+      font: "sans-serif",
       width: "",
       height: "",
     },
@@ -128,6 +130,9 @@ class DyBBcode {
       font: 'Font',
       heads: 'Head',
       color: 'Color',
+      code: 'Code',
+      quote: 'Quote',
+      vid: 'Vid',
       xpost: 'XPost',
       edit: 'Edit',
       preview: 'Preview',
@@ -147,7 +152,7 @@ class DyBBcode {
     this.editor = editor;
     this.params = params;
 
-    let g = DyBBcode.parseValues(this.params, DyBBcode.defaults);
+    let g = jbbed.parseValues(this.params, jbbed.defaults);
 
     this.bars = g.bars;
     this.keepBars = g.keepBars;
@@ -169,7 +174,7 @@ class DyBBcode {
     this.propPreview = g.propPreview;
     this.localize = g.localize;
 
-    this.allowed = DyBBcode.buildAllowedTags(this.bars, this.selectiveRemove);
+    this.allowed = jbbed.buildAllowedTags(this.bars, this.selectiveRemove);
   }
 
   /**
@@ -178,9 +183,9 @@ class DyBBcode {
    * @param object $ // jQuery object
    */
   addAttributes( $ ) {
-    this.preview = this.editor.next(".dybb-preview");
-    DyBBcode.addProp(this.editor, this.propTextarea);
-    DyBBcode.addProp(this.preview, this.propPreview);
+    this.preview = this.editor.next(".jbbed-preview");
+    jbbed.addProp(this.editor, this.propTextarea);
+    jbbed.addProp(this.preview, this.propPreview);
   }
 
   /**
@@ -193,19 +198,22 @@ class DyBBcode {
     let inselect = this.inselect;
     let select = this.select;
     let sizeUnit = this.sizeUnit;
-    let localize = this.localize;
+    let i = 0;
 
     for (let bar in bars) {
       if (bars[bar].trim().length === 0) {
         continue;
       }
       let buttons = bars[bar].split("|");
-      $(".dybb-buttons-container").append('<div class="dybb-bar dybb-bar-' + bar + '""></div>');
+      let first = i === 0 ? ' jbbed-first-bar' : '';
+      let last = i === Object.entries(bars).length ? 'jbbed-last-bar' : ''; i++;
+      
+      $(".jbbed-buttons-container").append('<div class="jbbed-bar jbbed-bar-' + bar + first + last + '"></div>');
       for (let b in buttons) {
         if( ! this.allowed.includes(buttons[b]) ) {
           continue;
         }
-        let label = DyBBcode.localize(this.localize, buttons[b]);
+        let label = jbbed.localize(this.localize, buttons[b]);
         if (inselect.includes(buttons[b])) {
           // selections
           let values = select[buttons[b]].split("|");
@@ -224,18 +232,18 @@ class DyBBcode {
             options += '<option value="' + value + '">' + name + "</option>";
           }
           let none = '<option value="">' + "--" + "</option>";
-          $(".dybb-bar-" + bar).append(
-            '<label class="dybb-label" >' + label + ': <select class="dybb-button-select ' + buttons[b] + '-button" data-button="' + buttons[b] + '">' + none + options + '</select></label>'
+          $(".jbbed-bar-" + bar).append(
+            '<label class="jbbed-label" >' + label + ': <select class="jbbed-button-select ' + buttons[b] + '-button" data-button="' + buttons[b] + '">' + none + options + '</select></label>'
           );
         } else {
-          $(".dybb-bar-" + bar).append(
-            '<span data-button="' + buttons[b] + '" class="dybb-button ' + buttons[b] + '-button">' + label + '</span>'
+          $(".jbbed-bar-" + bar).append(
+            '<span data-button="' + buttons[b] + '" class="jbbed-button ' + buttons[b] + '-button">' + label + '</span>'
           );
         }
       }
     }
 
-    $('.dybb-bar').each(function() {
+    $('.jbbed-bar').each(function() {
       if( $(this).is(':empty') ) {
         $(this).remove();
       }
@@ -254,19 +262,19 @@ class DyBBcode {
     let all = "";
     if (emoji == true) {
       for (let i = 128512; i <= 128567; i++) {
-        all += '<span class="dybb-button dybb-emoji" data-button="emoji" data-emoji="' + i + '">&#' + i + ";</span>&nbsp;";
+        all += '<span class="jbbed-button jbbed-emoji" data-button="emoji" data-emoji="' + i + '">&#' + i + ";</span>&nbsp;";
       }
     } else if (typeof emoji !== "boolean") {
       all = emoji.split("|");
       for (let i = 0; i < all.length; i++) {
-        all += '<span class="dybb-button dybb-emoji" data-button="emoji" data-emoji="' + i + '">&#' + i + ";</span>";
+        all += '<span class="jbbed-button jbbed-emoji" data-button="emoji" data-emoji="' + i + '">&#' + i + ";</span>";
       }
     }
-    $(".dybb-emoji-container div").html(all);
+    $(".jbbed-emoji-container div").html(all);
 
-    let h = $('.dybb-emoji-container div').height();
-    $('.dybb-emoji-container div').css('height', '28px');
-    $('.dybb-toggle').on('click', function() {
+    let h = $('.jbbed-emoji-container div').height();
+    $('.jbbed-emoji-container div').css('height', '28px');
+    $('.jbbed-toggle').on('click', function() {
       if( $(this).hasClass('open')) {
         $(this).next().animate({
           'height' : '28px'
@@ -287,14 +295,14 @@ class DyBBcode {
    * @param object $ // jQuery object
    */
   tabs( $ ) {
-    let label_edit = DyBBcode.localize(this.localize, 'edit');
-    let label_preview = DyBBcode.localize(this.localize, 'preview');;
-    let tabs = '<ul class="dybb-tab-editor"><li class="tab editor active">' + label_edit + '</li><li class="tab preview">' + label_preview + '</li></ul>';
+    let label_edit = jbbed.localize(this.localize, 'edit');
+    let label_preview = jbbed.localize(this.localize, 'preview');;
+    let tabs = '<ul class="jbbed-tab-editor"><li class="tab editor active">' + label_edit + '</li><li class="tab preview">' + label_preview + '</li></ul>';
     let editor = this.editor;
     $(tabs).insertBefore(editor);
     let tab_btn = editor.prev().children("li");
     let preview = editor.next();
-    editor.wrap('<div class="dybb-wrapper-tab"></div>');
+    editor.wrap('<div class="jbbed-wrapper-tab"></div>');
     editor.parent().append(preview);
     $(tab_btn).on("click", function () {
       let tab_button = editor.parent().prev().children("li");
@@ -344,12 +352,12 @@ class DyBBcode {
     let myeditor = "";
     if (this.showPreview === true) {
       myeditor = thisButton
-        .closest(".dybb-buttons-container")
+        .closest(".jbbed-buttons-container")
         .next()
         .next()
-        .children(".dybbcode-editor");
+        .children(".jbbed-editor");
     } else {
-      myeditor = thisButton.closest(".dybb-buttons-container").next();
+      myeditor = thisButton.closest(".jbbed-buttons-container").next();
     }
     let start = myeditor.attr("data-start");
     let end = myeditor.attr("data-end");
@@ -431,11 +439,11 @@ class DyBBcode {
    */
   putBBCode( $ ) {
     let thisClass = this;
-    $(document).on("click", ".dybb-button", function () {
+    $(document).on("click", ".jbbed-button", function () {
       thisClass.bbCodeFactory($(this));
     });
 
-    $(document).on("change", ".dybb-button-select", function () {
+    $(document).on("change", ".jbbed-button-select", function () {
       thisClass.bbCodeFactory($(this));
     });
   }
@@ -451,7 +459,7 @@ class DyBBcode {
 
     $(document).on(
       "click change keyup keydown",
-      ".dybb-button, .dybb-button-select, .dybbcode-editor",
+      ".jbbed-button, .jbbed-button-select, .jbbed-editor",
       function (e) {
         let string = textarea.val();
         // convert tag html and add br
@@ -460,14 +468,14 @@ class DyBBcode {
           .replace(/>/g, "&gt;")
           .replace(/\r?\n/g, "<br />");
         // decode bbtags
-        let newstring = DyBBcode.convert(
+        let newstring = jbbed.convert(
           string,
           thisClass.allowed.join('|'),
           thisClass.tagAttrs,
           thisClass.filterAttrs,
           thisClass.video
         );
-        $(".dybb-preview").html(newstring);
+        $(".jbbed-preview").html(newstring);
       }
     );
   }
@@ -504,34 +512,41 @@ class DyBBcode {
       newstring = newstring.replace(/\/?###(.*?)###/g, "[$1]");
     }
 
-    // convert tags with attributes
+    // convert tags with attributes or alias tags
     for (let t in tagAttrs) {
-      let attrs = tagAttrs[t].split("|");
-      let tag = attrs[0];
-      let open = attrs[1];
-      let close = "/" + tag;
-      let filter = ".*?";
-      if (typeof filterAttrs[t] !== "undefined") {
-        filter = filterAttrs[t];
-      }
-      let regex = new RegExp("\\[(" + t + ")=(" + filter + ")\\]", "gm");
-      let matches = newstring.matchAll(regex);
-      for (let m of matches) {
-        let value = m[2];
-        open = open.replace("$1", value);
-        let to = m[0].slice(1, -1);
-        newstring = newstring.replace(
-          "[" + to + "]",
-          "<" + tag + " " + open + ">"
-        );
-        newstring = newstring.replace("[/" + t + "]", "<" + close + ">");
+      // with attributes
+      if( tagAttrs[t].indexOf('|') > -1 ) {
+        let attrs = tagAttrs[t].split("|");
+        let tag = attrs[0];
+        let open = attrs[1];
+        let close = "/" + tag;
+        let filter = ".*?";
+        if (typeof filterAttrs[t] !== "undefined") {
+          filter = filterAttrs[t];
+        }
+        let regex = new RegExp("\\[(" + t + ")=(" + filter + ")\\]", "gm");
+        let matches = newstring.matchAll(regex);
+        for (let m of matches) {
+          let value = m[2];
+          open = open.replace("$1", value);
+          let to = m[0].slice(1, -1);
+          newstring = newstring.replace(
+            "[" + to + "]",
+            "<" + tag + " " + open + ">"
+          );
+          newstring = newstring.replace("[/" + t + "]", "<" + close + ">");
+        }
+      } 
+      else if( t !== tagAttrs[t] ) {
+        newstring = newstring.replace("[" + t + "]", "<" + tagAttrs[t] + ">");
+        newstring = newstring.replace("[/" + t + "]", "</" + tagAttrs[t] + ">");
       }
     }
 
     // convert video
     let matches = newstring.matchAll(/\[vid=([^<>\]\[\s]+)\]/g);
     for (let v of matches) {
-      let iframe = DyBBcode.getVideo(v[1], video_params);
+      let iframe = jbbed.getVideo(v[1], video_params);
       newstring = newstring.replace(v[0], iframe);
     }
 
@@ -539,9 +554,9 @@ class DyBBcode {
     let xpost = newstring.matchAll(/\[xpost=([^<>\]\[\s]+)\]/g);
     for (let v of xpost) {
       let r = Math.random();
-      let id = DyBBcode.randomString(r, 5);
-      newstring = newstring.replace(v[0], DyBBcode.xpostContainer(id));
-      DyBBcode.xpost(v[1], id);
+      let id = jbbed.randomString(r, 5);
+      newstring = newstring.replace(v[0], jbbed.xpostContainer(id));
+      jbbed.xpost(v[1], id);
     }
 
     // convert tags without attrs
@@ -696,7 +711,7 @@ class DyBBcode {
 
     // keep default buttons if true
     if (params.keepBars === true) {
-      params.bars = DyBBcode.keepMerge(params.bars, defaults.bars);
+      params.bars = jbbed.keepMerge(params.bars, defaults.bars);
     }
 
     // merge single
@@ -712,16 +727,16 @@ class DyBBcode {
     params.selectAttr = defaults.selectAttr + sep + params.selectAttr.trim();
 
     if (params.keepBars === true) {
-      params.bars = DyBBcode.keepMerge(params.bars, defaults.bars);
+      params.bars = jbbed.keepMerge(params.bars, defaults.bars);
     }
 
     // keep default select if true
     if (params.keepSelect === true) {
-      params.select = DyBBcode.keepMerge(params.select, defaults.select);
+      params.select = jbbed.keepMerge(params.select, defaults.select);
     }
 
     // merge tag Attrs
-    params.tagAttrs = DyBBcode.keepMerge(params.tagAttrs, defaults.tagAttrs);
+    params.tagAttrs = jbbed.keepMerge(params.tagAttrs, defaults.tagAttrs);
 
     for( let d in defaults.localize) {
       if( typeof params.localize[d] === 'undefined' || (typeof params.localize[d] !== 'undefined' && params.localize[d].trim() === '' ) ) {
@@ -737,7 +752,7 @@ class DyBBcode {
     }
 
     // merge filter Attrs
-    params.filterAttrs = DyBBcode.keepMerge(
+    params.filterAttrs = jbbed.keepMerge(
       params.filterAttrs,
       defaults.filterAttrs
     );
@@ -839,7 +854,7 @@ class DyBBcode {
 }
 
 /**
- * Alone function to convert DyBBCode
+ * Alone function to convert jbbed
  * @param {string} string 
  * @param {string} allowed 
  * @param {object} tagAttrs 
@@ -847,6 +862,6 @@ class DyBBcode {
  * @param {object} video_params 
  * @returns 
  */
-function convertDyBBcode(string, allowed, tagAttrs, filterAttrs, video_params) {
-  return DyBBcode.convert(string, allowed, tagAttrs, filterAttrs, video_params);
+function convertjbbed(string, allowed, tagAttrs, filterAttrs, video_params) {
+  return jbbed.convert(string, allowed, tagAttrs, filterAttrs, video_params);
 }

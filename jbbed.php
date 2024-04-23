@@ -1,22 +1,25 @@
 <?php 
 /**
- * Dybbcode processor
+ * jbbed php processor
  * Convert bbcode in html tags
+ * @version 1.0
  */
 
- class DybbDecode {
+ class jbbedDecode {
 	
     /**
      * Default args
      */
 	public $defaults = array(
-        'tags' => 'b|i|u|link|img|hr|ol|ul|li|size|color|font|vid|xpost',
+        'tags' => 'b|i|u|link|img|hr|ol|ul|li|quote|code|size|color|font|vid|xpost',
         'tagAttrs'  => array(
             'size'  => 'span|style="font-size:$1"',
             'font'  => 'span|style="font-family:$1"',
             'color' => 'span|style="color:$1"',
             'link'  => 'a|href="$1"',
             'img'   => 'img|src="$1"',
+			'quote' => 'blockquote*', // use asterisk for tag alias
+			'code'	=> 'pre*'
         ),
         'filterAttrs' => array(
             'size'  => "[a-zA-Z0-9]+",
@@ -171,7 +174,7 @@
     protected function _xpost( $url ) {
 		$id = self::uniqidReal(6);
 		$div = '<div id="' . $id . '"></div>';
-		$div .= '<script>var url = "' . $url . '";var id  = "' . $id . '";DyBBcode.xpost( url, id );</script>';
+		$div .= '<script>var url = "' . $url . '";var id  = "' . $id . '";jbbed.xpost( url, id );</script>';
 		return $div;
 	}
 	
@@ -252,11 +255,18 @@
      */
 	protected function _getHtml( $tagAttr = '', $value = '' ) {
 		
-		$a = explode('|', $tagAttr );
-		$tag = $a[0];
-		$attr = $a[1];
-		$attr = str_replace( '$1', $value, $attr );
-		return ['<' . $tag . ' ' . $attr . '>', '</' . $tag . '>'];
+		if( stripos($tagAttr, '|') !== false ) {
+			$a = explode('|', $tagAttr );
+			$tag = $a[0];
+			$attr = $a[1];
+			$attr = str_replace( '$1', $value, $attr );
+			$html = ['<' . $tag . ' ' . $attr . '>', '</' . $tag . '>'];
+		} else {
+			$tagAttr = trim( $tagAttr, '*');
+			$html = ['<' . $tagAttr . '>', '</' . $tagAttr . '>'];
+		}
+		
+		return $html;
 		
 	}
 	
@@ -275,11 +285,20 @@
 		
 		foreach( $tags as $tag ) {
 			
-			if( isset( $tagAttrs[$tag] ) && in_array( $tag, array_keys( $tagAttrs ) ) || $tag === 'vid' || $tag === 'xpost' ) {
+			if( isset( $tagAttrs[$tag] ) && 
+				in_array( $tag, array_keys( $tagAttrs ) ) || 
+				$tag === 'vid' || 
+				$tag === 'xpost' ) 
+			{
 				$bbcode = '/\[' . $tag . '=(.*?)\]/';
 				preg_match_all( $bbcode, $string, $match );
+				$alias = false;
 				if( ! isset( $match[0][0] ) && ! isset( $match[1][0]) ) {
-					continue;
+					if( ! isset( $tagAttrs[$tag]) || stripos( $tagAttrs[$tag], '*') === false ) {
+						continue;
+					} else {
+						$alias = true;
+					}
 				}
 				$close = '[/' . $tag . ']';
 				if( $tag === 'vid' ) {
@@ -301,8 +320,8 @@
 					$string = str_replace( $bbcode, $post, $string );
 				}
                 else {
-					$open = $match[0][0];
-					$value = $match[1][0];
+					$open = $alias === true ? '[' . $tag . ']' : $match[0][0];
+					$value = $alias === true ? '' : $match[1][0];
 					$html = $this->_getHtml($tagAttrs[$tag], $value );
 					$string = str_replace( [$open, $close], $html, $string );
 					
@@ -356,7 +375,7 @@
  * 
  * @param string $string string to pass to converte
  */
-function dybb_convert( $string = '', $args = [], $replace = false, $remove = ''  ) {
-    $inst = new DybbDecode( $string, $args, $replace, $remove  );
+function jbbed_convert( $string = '', $args = [], $replace = false, $remove = ''  ) {
+    $inst = new jbbedDecode( $string, $args, $replace, $remove  );
     return $inst->convert();
 }
