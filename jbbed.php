@@ -1,8 +1,9 @@
-<?php 
+<?php
 /**
  * jbbed php processor
  * Convert bbcode in html tags
- * @version 1.0
+ * @package jbbed plugin
+ * @version 1.0b
  */
 
  class jbbedDecode {
@@ -11,27 +12,27 @@
      * Default args
      */
 	public $defaults = array(
-        'tags' => 'b|i|u|link|img|hr|ol|ul|li|quote|code|size|color|font|vid|xpost',
-        'tagAttrs'  => array(
-            'size'  => 'span|style="font-size:$1"',
-            'font'  => 'span|style="font-family:$1"',
-            'color' => 'span|style="color:$1"',
-            'link'  => 'a|href="$1"',
-            'img'   => 'img|src="$1"',
-			'quote' => 'blockquote*', // use asterisk for tag alias
-			'code'	=> 'pre*'
-        ),
-        'filterAttrs' => array(
-            'size'  => "[a-zA-Z0-9]+",
-            'font'  => "[a-zA-Z0-9]+",
-            'color' => "[a-fA-F0-9#]+",
-            'img'   => "[^<>\s]+",
-            'link'  => "[^<>\]\[\s]+"
+        'tags' => 'b|i|u|s|link|img|hr|ol|ul|li|quote|code|size|color|font|vid|xpost|emoji|gist|spoiler|head',
+        'tagTranslate'  => array(
+			'size' 			=> ['span', 'style="font-size:$1"', "[a-zA-Z0-9]+"],
+			'font' 			=> ['span', 'style="font-family:$1"', "[a-zA-Z0-9\\s]+"],
+			'color' 		=> ['span', 'style="color:$1"', "[a-fA-F0-9#]+"],
+			'link' 			=> ['a', 'href="$1"', "[^<>\\]\\[\\s]+"],
+			'img' 			=> ['img', 'src="$1"', "[^<>\\s]+"],
+			'quote' 		=> ['blockquote', '', ''],
+			'code' 			=> ['pre', '', ''],
+			'aligncenter' 	=> ['p', 'style="text-align:center"', ''],
+			'alignleft' 	=> ['p', 'style="text-align:left"', ''],
+			'alignright' 	=> ['p', 'style="text-align:right"', ''],
+			'alignjustify' 	=> ['p', 'style="text-align:justify"', ''],
+			'head' 			=> ['', '$1', '[1-6]+'],
+			'spoiler' 		=> ['div', 'style="display:none"', '']
         ),
         'video' => array(
             'youtube' => "560|315",
             'rumble' => "640|360",
-        )
+        ),
+        'autop' => true
     );
     
     /**
@@ -108,7 +109,7 @@
 	        			$new_args[$param] = $values;
 	        		}
 	        		break;
-	        	case 'tagsAttrs' || 'filterAttrs' :
+	        	case 'tagTranslate' :
 	        		if(  isset( $args[$param]) && is_array( $args[$param])  ) {
 	        			foreach( array_keys( $defaults[$param]) as $v ) {
 		        			if( false !== array_key_exists( $v, $args[$param]) ) {
@@ -117,6 +118,11 @@
 	        			}
 	        			$new_args[$param] = array_merge( $values, $args[$param]);
 	        		} else {
+	        			$new_args[$param] = $values;
+	        		}
+	        	break;
+	        	case 'autop':
+	        		if( !isset( $args[$param] ) ) {
 	        			$new_args[$param] = $values;
 	        		}
 	        	break;
@@ -136,10 +142,12 @@
 		$string = $this->string;
 		
 		preg_match_all( '/\[(.*?)\]/', $string, $match );
-
+		
 		$n_match = [];
+		$bb_tags = $match[0];
 	
-		foreach( $match[0] as $m ) {
+		foreach( $bb_tags as $m ) {
+			// remove illegal chars into tag BB
 			$m = preg_replace("/['\"<>\(\)\[\]\$!]/", '', $m);
 			$n_match[] = '[' . $m . ']';
 		}
@@ -148,6 +156,14 @@
 		
 		// encode all special chars
 		$n_string = htmlspecialchars($n_string, ENT_QUOTES, 'UTF-8');
+		
+		// remove new lines into ul/ol
+		$re = '/((\[ol|ul|li\])\n\r|\r|\n|\s{1,})(\[\/?(ol|ul|li)])/m';
+		$n_string = preg_replace($re, '$3', $n_string);
+		
+		// convert lines in br
+		$n_string = preg_replace('/\n|\r|\r\n/m', '<br>', $n_string);
+
 		$this->string = $n_string;
 	}
 	
@@ -163,7 +179,7 @@
 	    	$e_args = explode( '|', $this->args['tags'] );
 		    foreach( $e_args  as $k => $value ) {
 		    	if( in_array( $value, $removes ) ) {
-		    		unset( $e_args[$k]);
+		    		unset( $e_args[$k] );
 		    	}
 		    }
 		    $this->args['tags'] = implode('|', $e_args);
@@ -171,11 +187,26 @@
 		
 	}
 
+	/**
+	 * Add xpost 
+	 * @param string $url
+	 * @return string
+	 */
     protected function _xpost( $url ) {
 		$id = self::uniqidReal(6);
 		$div = '<div id="' . $id . '"></div>';
 		$div .= '<script>var url = "' . $url . '";var id  = "' . $id . '";jbbed.xpost( url, id );</script>';
 		return $div;
+	}
+
+	/**
+	 * Add gist
+	 * @param string $url
+	 * @return string
+	 */
+    protected function _gist( $url ) {
+		$id = self::uniqidReal(6);
+		return '<script id="' . $id . '" src="' . $url . '"></script>';
 	}
 	
     /**
@@ -253,18 +284,13 @@
 	 * 
      * @return array
      */
-	protected function _getHtml( $tagAttr = '', $value = '' ) {
+	protected function _getHtml( $tagTraslate = '', $value = '' ) {
+
+		$tag_html = trim( $tagTraslate[0] );
+		$tag_attr = strlen( trim( $tagTraslate[1] ) ) === 0 ? '' : ' ' . trim( $tagTraslate[1] );
 		
-		if( stripos($tagAttr, '|') !== false ) {
-			$a = explode('|', $tagAttr );
-			$tag = $a[0];
-			$attr = $a[1];
-			$attr = str_replace( '$1', $value, $attr );
-			$html = ['<' . $tag . ' ' . $attr . '>', '</' . $tag . '>'];
-		} else {
-			$tagAttr = trim( $tagAttr, '*');
-			$html = ['<' . $tagAttr . '>', '</' . $tagAttr . '>'];
-		}
+		$attr = str_replace( '$1', $value, $tag_attr );
+		$html = ['<' . $tag_html . $attr . '>', '</' . $tag_html . '>'];
 		
 		return $html;
 		
@@ -275,28 +301,31 @@
      * @return string
      */
 	public function convert() {
-		$this->_prepare();
 		$this->_remove();
 		$this->_clearString();
 		
 		$tags = explode( '|', $this->args['tags']);
 		$string = $this->string;
-		$tagAttrs = $this->args['tagAttrs'];
+		$tagTranslate = $this->args['tagTranslate'];
 		
 		foreach( $tags as $tag ) {
 			
-			if( isset( $tagAttrs[$tag] ) && 
-				in_array( $tag, array_keys( $tagAttrs ) ) || 
+			if( isset( $tagTranslate[$tag] ) && 
+				in_array( $tag, array_keys( $tagTranslate ) ) || 
 				$tag === 'vid' || 
 				$tag === 'xpost' ) 
 			{
-				$bbcode = '/\[' . $tag . '=(.*?)\]/';
+				$regex = isset( $tagTranslate[$tag][2] ) && strlen( trim( $tagTranslate[$tag][2] ) ) > 0 ?
+					$tagTranslate[$tag][2] : '.*?';
+				$bbcode = '/\[' . $tag . '=(' . $regex . ')\]/';
 				preg_match_all( $bbcode, $string, $match );
 				$alias = false;
 				if( ! isset( $match[0][0] ) && ! isset( $match[1][0]) ) {
-					if( ! isset( $tagAttrs[$tag]) || stripos( $tagAttrs[$tag], '*') === false ) {
+					if( ! isset(  $tagTranslate[$tag][1] ) || 
+						( strlen( trim( $tagTranslate[$tag][1] ) ) > 0  && stripos( $tagTranslate[$tag][1], '$1' ) !== false ) ) {
 						continue;
 					} else {
+						
 						$alias = true;
 					}
 				}
@@ -307,7 +336,6 @@
 					$urls = $match[1];
 					
 					foreach( $urls as $k => $url ) {
-	
 						$iframe = $this->_getVideo( $url, $bbcodes[$k] );
 						$string = str_replace( $bbcodes[$k], $iframe, $string );
 					}
@@ -319,12 +347,17 @@
 					$post = $this->_xpost( $url );
 					$string = str_replace( $bbcode, $post, $string );
 				}
+				elseif( $tag === 'gist') {
+					$bbcode = $match[0][0];
+					$url = $match[1][0];
+					$gist = $this->_gist( $url );
+					$string = str_replace( $bbcode, $gist, $string );
+				}
                 else {
 					$open = $alias === true ? '[' . $tag . ']' : $match[0][0];
-					$value = $alias === true ? '' : $match[1][0];
-					$html = $this->_getHtml($tagAttrs[$tag], $value );
+					$value = $alias === true ? '' : (isset($match[1][0]) ? $match[1][0] : '');
+					$html = $this->_getHtml($tagTranslate[$tag], $value );
 					$string = str_replace( [$open, $close], $html, $string );
-					
 				}
 			
 			} else {
@@ -334,16 +367,41 @@
 			}
 			
 		}
-
-        // convert new lines
-        $string = preg_replace('/\r\n|\r|\n/', '<br />', $string );
 		
-		// convert special char in his entity
-		$string = html_entity_decode( $string );
+		// apply autop
+		$string = $this->args['autop'] === true ? self::autop($string) : $string;
 		
 		return $string;
 		
 	}
+	
+	static function autop( $string ) {
+
+	    // remove previous p
+	    $newstring = preg_replace('/<\/?p>/m', '', $string);
+	
+	    // list of html block elements
+	    $arr = [
+	      'ol','ul','pre','blockquote','hr','h1','h2','h3','h4','h5','h6',
+	      'address','article','aside','canvas','dd','div','dl','dt','fieldset',
+	      'figcaption','figure','footer','form','header','li','main',
+	      'nav','noscript','section','table','video','tfoot','nav',
+	      'table','details','dialog','hgroup','tbody','td','th','thead',
+	      'noframes','menu'
+	    ];
+	
+		$string_arr = implode('|', $arr);
+	
+	    $newstring = preg_replace('/<br><br>(.*?)<br><br>/m', '</p>$1<p>', $newstring);
+	    $newstring = preg_replace('/(<(' . $string_arr . '))/m', '</p>$1', $newstring);
+	    $newstring = preg_replace('/(<\/(' . $string_arr . ')>)<\/p>/m', '$1', $newstring); 
+	    $newstring = preg_replace('/(<(hr)>)<\/p>/m', '$1', $newstring);
+	    $newstring = preg_replace('/<\/p>([^<])/m', '<br>$1', $newstring);
+	    $newstring = preg_replace('/<\/p>$/m', '', $newstring); 
+	    $newstring = str_replace('<p></p>', '', $newstring);
+	
+	    return '<p>' . $newstring . '</p>';
+  }
 
     /**
      * Generate unique id
@@ -373,7 +431,7 @@
  * @param bool $replace // check if you want replace or not
  * @param string $remove // tags to remove
  * 
- * @param string $string string to pass to converte
+ * @return string
  */
 function jbbed_convert( $string = '', $args = [], $replace = false, $remove = ''  ) {
     $inst = new jbbedDecode( $string, $args, $replace, $remove  );
