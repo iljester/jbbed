@@ -67,36 +67,20 @@
         $(this).closest('#' + mainContainer.id).addClass('jbbed-custom jbbed-template');
     }
 
-    if (inst.params.showPreview === true) {
-      $(previewContainer).append(this.val()).insertAfter(this);
-      // add tabs editor/preview
-      inst.tabs($);
-    }
+    // insert preview after textarea
+    $(previewContainer).insertAfter(this);
 
-    // add attributes to textarea and previews
-    inst.addAttributes($);
+    // get buttons frame
+    inst.buttons($);
 
-    // create buttons
-    inst.buttonsFactory($);
+    // get fullscreen frame
+    inst.fullscreen( $ );
 
-    // add emoji container
-    if ( inst.params.emoji !== false && 
-      ( inst.params.selectiveRemove.includes('emoji') || ! inst.allButtons.includes('emoji') ) ) 
-    {
-      $(buttonsContainer).append(emojiContainer);
-    }
-
-    // add emoji
-    inst.emojiFactory($);
-
-    // set data position
-    inst.setDataPosition($);
-
-    // set dialog
-    inst.putDialog($);
+    // get preview frame;
+    inst.preview($);
 
     // do BBCode
-    inst.putBBCode($);
+    inst.textarea($);
 
   };
 
@@ -113,12 +97,11 @@ class Jbbed {
   ID = '';
   editor;
   params  = {};
-  frame   = {}; 
+  frame = {};
   allowed = [];  
   allButtons = [];
+  buttonLocalized = {};
   tiny = false;
-  preview;
-  tab;
 
   /**
    * Default values
@@ -126,8 +109,8 @@ class Jbbed {
   static defaults = {
     editorID: '',
     bars: {
-      1: ['b', 'i', 'u', 's', '#', 'link', 'img', 'vid', '#', 'ol', 'ul', 'li', '#', 'quote', 'code', 'hr', 'spoiler'],
-      2: ['size', 'font', 'color', 'head', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'emoji', 'xpost', 'jsf', '#', 'clear'],
+      1: ['b', 'i', 'u', 's', '#', 'link', 'img', 'vid', '#', 'ol', 'ul', 'li', '#', 'quote', 'code'],
+      2: ['size', 'font', 'color', 'head', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'hr', 'spoiler', '#', 'emoji', 'jsf', '#', 'clear'],
     },
     modal: ['xpost', 'size', 'color', 'font', 'head', 'jsf'],
     modalArgs: {
@@ -197,8 +180,7 @@ class Jbbed {
     },
     emoji: true,
     fullscreen: true,
-    buttonsTabPos: 'right', // or right
-    showPreview: false,
+    showPreview: true,
     theme: 'classic',
     buttonsIcon: true,
     localizeButtons: {
@@ -230,7 +212,6 @@ class Jbbed {
       no:           ['label:NO', 'title:No', 'className:jbbicon-close jbbicon'],
       emoji:        ['label:Emoji', 'title:Emoji', 'className:jbbicon-emoticon jbbicon'],
       spoiler:      ['label:Spoiler', 'title:Spoiler', 'className:jbbicon-spoiler jbbicon'],
-      xpost:        ['label:XPost', 'title:XPost', 'className:jbbicon-x jbbicon'],
       jsf:         ['label:JsFiddle', 'title:JsFiddle', 'className:jbbicon-jsf jbbicon'],
       fullscreen:   ['label:Fullscreen', 'title:Fullscreen', 'className:jbbicon-fullscreen jbbicon']
 
@@ -264,17 +245,17 @@ class Jbbed {
 
     this.ID = this.params.editorID;
 
-    // build frame
-    this.buildFrame();
+    // frames
+    this.frames();
 
     // set allowed tags
-    this.allowed = Jbbed.buildAllowedTags(this.allButtons, this.params.selectiveRemove);
+    this.allowedTags();
   }
 
   /**
    * Build editor structure
    */
-  buildFrame() {
+  frames() {
 
     const ID = this.ID;
 
@@ -287,15 +268,6 @@ class Jbbed {
       }
     );
 
-    // preview container
-    this.frame.preview = Jbbed.createElement(
-      'div',
-      {
-        cls: 'jbbed-preview',
-        id: 'preview-container-' + ID,
-        css: 'display:none'
-      }
-    );
     // buttons container
     this.frame.buttons = Jbbed.createElement(
       'div',
@@ -311,6 +283,34 @@ class Jbbed {
       {
         cls: 'jbbed-emoji-container',
         id: 'emoji-container-' + ID
+      }
+    );
+
+    // fullscreen frame
+    this.frame.fullscreen = Jbbed.createElement(
+      'div',
+      {
+        cls: 'jbbed-fullscreen-container',
+        id: 'fullscreen-container-' + ID
+      }
+    ),
+
+    // tab frame
+    this.frame.tab = Jbbed.createElement(
+      'ul',
+      {
+        cls: 'jbbed-tab-editor',
+        id: 'tab-editor-' + ID
+      }
+    ),
+
+    // preview container
+    this.frame.preview = Jbbed.createElement(
+      'div',
+      {
+        cls: 'jbbed-preview',
+        id: 'preview-container-' + ID,
+        css: 'display:none'
       }
     );
   
@@ -396,196 +396,60 @@ class Jbbed {
   }
 
   /**
-   * Add attributes
-   * 
-   * @param object $ // jQuery object
+   * Build allowed tags
    */
-  addAttributes( $ ) {
-    this.preview = this.editor.next('#' + this.frame.preview.id);
-    Jbbed.addProp(this.editor, this.params.textareaArgs);
-    Jbbed.addProp(this.preview, this.params.previewArgs);
-  }
+  allowedTags() {
 
-  /**
-   * Add buttons
-   * 
-   * @param object $ // jQuery object
-   */
-  buttonsFactory( $ ) {
-    const 
-    ID              = this.ID,
-    bars            = this.params.bars,
-    inselect        = Object.getOwnPropertyNames(this.params.select),
-    select          = this.params.select,
-    localizeButtons = this.params.localizeButtons,
-    allowed         = this.allowed,
-    theme           = this.params.theme,
-    buttonsIcon     = this.params.buttonsIcon,
-    emoji           = this.params.emoji,
-    modal           = this.params.modal,
-    btnsContainer   = this.frame.buttons,
-    separator       = '#';
-
-    // restore separator
-    allowed.push(separator);
+    const buttons    = this.allButtons,
+          selectiveR = this.params.selectiveRemove;
     
-    let i = 0;
-    for (let bar in bars) {
-      if (bars[bar].length === 0) {
+    const allowed   = [],
+          to_remove = Jbbed.explodeString( selectiveR, '|' );
+    for( const b in buttons ) {
+      if( to_remove.includes(buttons[b] ) ) {
         continue;
+      } else {
+        allowed.push(buttons[b]);
       }
-
-      const 
-      buttons = Jbbed.explodeString(bars[bar], '|'),
-      first = i === 0 ? ' jbbed-first-bar' : '',
-      last = i === Object.entries(bars).length ? 'jbbed-last-bar' : '';
-      i++;
-      
-      const elBar = Jbbed.createElement(
-        'div', { cls:'bar-' + ID + ' jbbed-bar jbbed-bar-' + bar + first + last }
-      );
-      
-      $('#' + btnsContainer.id).append(elBar);
-      for (let b in buttons) {
-
-        if( ! allowed.includes(buttons[b]) ) {
-          continue;
-        }
-
-        if( emoji === false && buttons[b] === 'emoji') {
-          continue;
-        }
-
-        if( buttons[b] === separator) {
-          const elSep = Jbbed.createElement(
-            'span', { cls: 'sep-' + ID + ' jbbed-sep' }
-          );
-          $(elBar).append(elSep);
-          continue;
-        }
-       
-        const buttonAttrs = Jbbed.localizeButtons(localizeButtons, buttons[b], theme),
-              label       = buttonsIcon === true ? '' : buttonAttrs.label,
-              customClass = buttonAttrs.className.length > 0 ? ' ' + buttonAttrs.className : '',
-              title       = buttonAttrs.title.length > 0 ? buttonAttrs.title : '';
-        
-        if (inselect.includes(buttons[b]) && ! modal.includes(buttons[b])) {
-          // selections
-          const 
-          values = Jbbed.explodeString( select[buttons[b]], '|' ),   
-          elLabel = Jbbed.createElement( 
-            'label', { 
-              cls : 'jbbed-label' + customClass,
-               // In this case it is better that the drop down selector has a label
-              textContent : buttonAttrs.label
-            }
-          ),
-          elSelect = Jbbed.createElement(
-            'select', {
-              cls : 'button-select-' + ID + ' jbbed-button-select select-action-' + ID + ' ' + buttons[b] + '-button',
-              data : 'data-button:' + buttons[b],
-              value: values
-            }
-          );
-          $(elBar).append(elLabel);
-          $(elLabel).append(elSelect);
-        } else {
-          // These buttons must necessarily be displayed in a modal window. 
-          // Therefore it is not necessary to insert them into the modal argument
-          // Exceptionally for emoji, you can remove them from buttons. 
-          // In that case, a sidebar will be displayed after the button bars.
-          switch(buttons[b]) {
-            case 'link'  : modal.push(buttons[b]); break;
-            case 'img'   : modal.push(buttons[b]); break;
-            case 'vid'   : modal.push(buttons[b]); break;
-            case 'emoji' : modal.push(buttons[b]); break;
-          }
-          let actionClass = modal.includes(buttons[b]) ? 'modal-action-' + ID + ' ' : 'button-action-' + ID + ' '; // temp per ora.
-          const elButton = Jbbed.createElement(
-            'button',
-            {
-              title: title,
-              id: buttons[b] + '-button-' + ID,
-              cls: 'button-' + ID + ' jbbed-button ' + actionClass + buttons[b] + '-button' + customClass,
-              textContent: label,
-              type: 'button',
-              data: 'data-button:' + buttons[b]
-            }
-          )
-          $(elBar).append(elButton);
-        }
-      }
-    } // end for
-
-    $('.sep-' + ID).each(function() {
-      if($(this).next().length === 0) {
-        $(this).remove();
-      }
-    })
-
-    $('.bar-' + ID).each(function() {
-      if( $(this).is(':empty') ) {
-        $(this).remove();
-      }
-    });
-
+    }
+    
+    this.allowed = allowed;
+    
   }
 
   /**
-   * Add emoji
-   *
-   * @param object $ // jQuery object
+   * Localize buttons and tabs
+   * @param {string} thisButton 
    */
-  emojiFactory( $ ) {
-    const 
-    ID = this.ID,
-    emojiContainer = this.frame.emoji,
-    subContainer = document.createElement('div'),
-    toggle = Jbbed.createElement(
-      'span', { cls: 'toggle-'+ ID + ' jbbed-toggle close'}
-    );
-    
-    let emoji = this.params.emoji,
-    selected  = typeof emoji !== 'boolean' ? Jbbed.explodeString(emoji, '|') : emoji;
-    
-    emoji = Jbbed.getEmoji(selected);
-    for( const e in emoji) {
-      const elEm = Jbbed.createElement(
-        'span',
-        {
-          cls: 'jbbed-button button-action-' + ID + ' jbbed-emoji',
-          data: ['data-button:emoji', 'data-emoji:' + emoji[e]],
-          htmlContent: emoji[e]
-        }
-      )
-      $(subContainer).append(elEm);
+  localizeButtons( thisButton ) {
+
+    const localize = this.params.localizeButtons;
+
+    if( typeof localize[thisButton] === 'object' && localize[thisButton].length > 0 ) {
+      thisButton = localize[thisButton];
+    } else {
+      thisButton = ['label:' + thisButton, 'title:' + thisButton, 'className:'];
     }
 
-    $('#' + emojiContainer.id).append([subContainer, toggle]);
-
-    const h = $('#' + emojiContainer.id + ' div').height();
-    $('#' + emojiContainer.id + ' div').css('height', '28px');
-    $('.toggle-' + ID).on('click', function() {
-      if( $(this).hasClass('open')) {
-        $(this).prev().animate({
-          'height' : '28px'
-        }, 400)
-        $(this).addClass('close').removeClass('open');
-      } else {
-        $(this).prev().animate({
-          'height' : h + 'px'
-        }, 400)
-        $(this).addClass('open').removeClass('close');
+    let buttonAttrs = {};
+    for( const s in thisButton ) {
+      if( thisButton[s].indexOf(':') > -1 ) {
+        const v = thisButton[s].split(':', 2);
+        buttonAttrs[v[0]] = v[1];
       }
-    });
+    }
+
+    this.buttonLocalized = buttonAttrs;
+
   }
+
 
   /**
    * Build a modal dialog for some buttons
    * @param {object} thisButton
    * @returns 
    */
-  dialogFactory(thisButton) {
+  dialogModal(thisButton) {
     const
     ID               = this.ID, 
     dataButton       = thisButton.attr('data-button'),
@@ -715,10 +579,11 @@ class Jbbed {
         case 0 : t = 'ok'; break;
         case 1 : t = 'no'; break;
       }
-      buttonAttrs[i] = Jbbed.localizeButtons(localizeButtons, t, theme);
-      label[i]      = buttonsIcon === true ? '' : buttonAttrs[i].label,
-      customClass[i] = buttonAttrs[i].className.length > 0 ? ' ' + buttonAttrs[i].className : '',
-      title[i]      = buttonAttrs[i].title.length > 0 ? buttonAttrs[i].title : ''
+      this.localizeButtons(t);
+      buttonAttrs[i] = this.buttonLocalized;
+      label[i]      = buttonsIcon === true ? '' : buttonAttrs[i].label;
+      customClass[i] = buttonAttrs[i].className.length > 0 ? ' ' + buttonAttrs[i].className : '';
+      title[i]      = buttonAttrs[i].title.length > 0 ? buttonAttrs[i].title : '';
     }
    
     // insert buttons ok no
@@ -797,15 +662,8 @@ class Jbbed {
                 $('#' + previewContainer.id).html(img).show();
                 break;
               case 'vid' :
-                value = Jbbed.getVideo(value, video);
+                value = Jbbed.buildVid(value, video);
                 $('#' + previewContainer.id).html(value).show();
-              break;
-              case 'xpost' :
-                if( value.length > 0 ) {
-                  Jbbed.xpost(value,  previewContainer.id);
-                  value = '';
-                }
-                $('#' + previewContainer.id).show();
               break;
             }
             if( value.length === 0 ) {
@@ -993,143 +851,180 @@ class Jbbed {
   }
 
   /**
-   * Add spoiler script to spoiler bbTag
-   */
-  spoiler() {
-
-    const 
-    ID           = this.ID,
-    target       = this.params.spoilerArgs.className,
-    buttonHide   = this.params.spoilerArgs.buttonHide,
-    buttonShow   = this.params.spoilerArgs.buttonShow,
-    slide        = this.params.spoilerArgs.slide,
-    spoilerContainer = Jbbed.createElement(
-      'div',
-      {
-        cls: 'jbbed-spoiler-container'
-      }
-    ),
-    button = Jbbed.createElement(
-      'button',
-      {
-        textContent: buttonShow,
-        cls: 'button-spoiler-' + ID + ' jbbed-button-spoiler'
-      }
-    );
-
-    $('.' + target).wrap(spoilerContainer);
-    $(button).insertAfter('.' + target);
-
-    const id = '.button-spoiler-' + ID;
-
-    $(document).on("click", id, function() {
-      const btn = $(this);
-      btn.prev().toggle(slide, function() {
-        if( ! $(this).is(':hidden')) { // show
-          btn.text(buttonHide);
-        } else { // hide
-          btn.text(buttonShow)
-        }
-      });
-    });
-
-  }
-
-  /**
-   * Run some scripts after preview
-   * @param {object} preview 
-   */
-  afterPreview( preview ) {
-    const jsfPlay = this.params.jsfPlay;
-
-    // fill jsfiddle snippets
-    Jbbed.jsfSnippet(preview, jsfPlay );
-
-  }
-
-  /**
-   * Add tabs to switch editor -> preview
+   * Add buttons
    * 
    * @param object $ // jQuery object
    */
-  tabs( $ ) {
+  buttons( $ ) {
     const 
     ID              = this.ID,
     instance        = this,
+    bars            = this.params.bars,
+    inselect        = Object.getOwnPropertyNames(this.params.select),
+    select          = this.params.select,
     localizeButtons = this.params.localizeButtons,
-    editor          = this.editor,
+    allowed         = this.allowed,
+    theme           = this.params.theme,
     buttonsIcon     = this.params.buttonsIcon,
-    buttonsTabPos   = this.params.buttonsTabPos,
-    fullscreen      = this.params.fullscreen,
-    buttonAttrs = [],
-    label = [],
-    customClass = [],
-    title = [],
-    tab = Jbbed.createElement(
-      'ul',
-      {
-        cls: 'jbbed-tab-editor jbbed-buttons-' + buttonsTabPos,
-        css: 'textAlign:' + buttonsTabPos
-      }
-    ),
-    tabItem = [],
-    tabbedID = 'tabbed-' + ID,
-    fullscreenID = 'fullscreen-' + ID,
-    tabButtons = ['edit', 'preview', 'fullscreen'];
+    emoji           = this.params.emoji,
+    modal           = this.params.modal,
+    btnsContainer   = this.frame.buttons,
+    separator       = '#';
 
-    for( const b in tabButtons ) {
-      let a = '';
-      switch(tabButtons[b]) {
-        case 'edit'       : a = ' active jbbed-tab-edit ' + tabbedID; break;
-        case 'preview'    : a = ' jbbed-tab-preview ' + tabbedID; break;
-        case 'fullscreen' : a = ' jbbed-tab-fullscreen ' + fullscreenID; break;
-      }
-
-      if( fullscreen === false && tabButtons[b] === 'fullscreen' ) {
+    // restore separator
+    allowed.push(separator);
+    
+    let i = 0;
+    for (let bar in bars) {
+      if (bars[bar].length === 0) {
         continue;
       }
+
+      const 
+      buttons = Jbbed.explodeString(bars[bar], '|'),
+      first = i === 0 ? ' jbbed-first-bar' : '',
+      last = i === Object.entries(bars).length ? 'jbbed-last-bar' : '';
+      i++;
       
-      buttonAttrs[b] = Jbbed.localizeButtons(localizeButtons, tabButtons[b]);
-      label[b]       = buttonsIcon === true ? '' : buttonAttrs[b].label;
-      customClass[b] = buttonAttrs[b].className.length > 0 ? ' ' + buttonAttrs[b].className : '';
-      title[b]       = buttonAttrs[b].title.length > 0 ? buttonAttrs[b].title : '';
+      const elBar = Jbbed.createElement(
+        'div', { cls:'bar-' + ID + ' jbbed-bar jbbed-bar-' + bar + first + last }
+      );
+      
+      $('#' + btnsContainer.id).append(elBar);
+      for (let b in buttons) {
 
-      let btnFullScreenPos = '';
-      if( tabButtons[b] === 'fullscreen' ) {
-        btnFullScreenPos = ( buttonsTabPos === 'left' ? ' right' : ' left' );
-      }
-
-      tabItem[b] = Jbbed.createElement(
-        'li',
-        {
-          title: title[b],
-          id: tabButtons[b] + '-' + ID,
-          cls: 'tab' + ' ' + tabButtons[b] + a + customClass[b] + btnFullScreenPos
+        if( ! allowed.includes(buttons[b]) ) {
+          continue;
         }
-      )
-    }
 
-    $(tab).append(tabItem)
-    $(tab).insertBefore(editor);
-    const tabBtn = $('.' + tabbedID),
-          fsBtn = $('.' + fullscreenID),
-          preview = editor.next(),
-          wrapperTab = Jbbed.createElement(
-            'div', {
-              cls: 'jbbed-wrapper-tab',
-              id: 'wrapper-tab-' + ID
+        if( emoji === false && buttons[b] === 'emoji') {
+          continue;
+        }
+
+        if( buttons[b] === separator) {
+          const elSep = Jbbed.createElement(
+            'span', { cls: 'sep-' + ID + ' jbbed-sep' }
+          );
+          $(elBar).append(elSep);
+          continue;
+        }
+       
+        this.localizeButtons(buttons[b]);
+        const buttonAttrs = this.buttonLocalized,
+              label       = buttonsIcon === true ? '' : buttonAttrs.label,
+              customClass = buttonAttrs.className.length > 0 ? ' ' + buttonAttrs.className : '',
+              title       = buttonAttrs.title.length > 0 ? buttonAttrs.title : '';
+        
+        if (inselect.includes(buttons[b]) && ! modal.includes(buttons[b])) {
+          // selections
+          const 
+          values = Jbbed.explodeString( select[buttons[b]], '|' ),   
+          elLabel = Jbbed.createElement( 
+            'label', { 
+              cls : 'jbbed-label' + customClass,
+               // In this case it is better that the drop down selector has a label
+              textContent : buttonAttrs.label
+            }
+          ),
+          elSelect = Jbbed.createElement(
+            'select', {
+              cls : 'button-select-' + ID + ' jbbed-button-select select-action-' + ID + ' ' + buttons[b] + '-button',
+              data : 'data-button:' + buttons[b],
+              value: values
+            }
+          );
+          $(elBar).append(elLabel);
+          $(elLabel).append(elSelect);
+        } else {
+          // These buttons must necessarily be displayed in a modal window. 
+          // Therefore it is not necessary to insert them into the modal argument
+          // Exceptionally for emoji, you can remove them from buttons. 
+          // In that case, a sidebar will be displayed after the button bars.
+          switch(buttons[b]) {
+            case 'link'  : modal.push(buttons[b]); break;
+            case 'img'   : modal.push(buttons[b]); break;
+            case 'vid'   : modal.push(buttons[b]); break;
+            case 'emoji' : modal.push(buttons[b]); break;
+          }
+          let actionClass = modal.includes(buttons[b]) ? 'modal-action-' + ID + ' ' : 'button-action-' + ID + ' '; // temp per ora.
+          const elButton = Jbbed.createElement(
+            'button',
+            {
+              title: title,
+              id: buttons[b] + '-button-' + ID,
+              cls: 'button-' + ID + ' jbbed-button ' + actionClass + buttons[b] + '-button' + customClass,
+              textContent: label,
+              type: 'button',
+              data: 'data-button:' + buttons[b]
             }
           )
-    editor.wrap(wrapperTab);
-    editor.parent().append(preview);
+          $(elBar).append(elButton);
+        }
+      }
+    } // end for
 
-    // create tab property
-    this.tab = wrapperTab;
-    // create preview property
-    this.preview = preview;
+    $('.sep-' + ID).each(function() {
+      if($(this).next().length === 0) {
+        $(this).remove();
+      }
+    })
 
-    $(fsBtn).on('click', function() {
-      const container = '#container-' + ID;
+    $('.bar-' + ID).each(function() {
+      if( $(this).is(':empty') ) {
+        $(this).remove();
+      }
+    });
+
+    $(document).on("click", '.modal-action-' + ID, function () {
+      instance.dialogModal($(this));
+    });
+    $('html').on('click', function(e) {
+      if( ! e.target.classList.contains(ID + '-d') ) {
+        $('.dialog-' + ID).remove();
+      }
+    })
+
+  }
+
+  /**
+   * Fullscreen frame
+   * 
+   * @param object $ // jQuery object
+   */
+  fullscreen( $ ) {
+    const 
+    ID               = this.ID,
+    fullscreen       = this.frame.fullscreen,
+    buttonsContainer = this.frame.buttons,
+    mainContainer    = this.frame.main,
+    buttonsIcon      = this.params.buttonsIcon,
+    fsButton         = 'fullscreen',
+    noShowPrev       = this.params.showPreview === false ? ' no-show-preview' : ''
+    
+    this.localizeButtons(fsButton);
+    const
+    buttonAttrs      = this.buttonLocalized,
+    label            = buttonsIcon === true ? '' : buttonAttrs.label,
+    customClass      = buttonAttrs.className.length > 0 ? ' ' + buttonAttrs.className : '',
+    title            = buttonAttrs.title.length > 0 ? buttonAttrs.title : '';
+    
+
+    $(fullscreen).insertAfter(buttonsContainer);
+
+    const fullscreenButton = Jbbed.createElement(
+      'button',
+      {
+        id: 'fullscreen-button-' + ID,
+        cls: 'jbbed-fullscreen-button' + customClass + noShowPrev,
+        title: title,
+        type: 'button',
+        textContent: label
+      }
+    );
+
+    $(fullscreen).append(fullscreenButton);
+    $('#' + fullscreenButton.id).on('click', function() {
+      const container = '#' + mainContainer.id;
       if( $(container).hasClass('jbbed-fullscreen') ) {
         $(container).removeClass('jbbed-fullscreen');
         $(this).removeClass('fullscreen-active');
@@ -1137,92 +1032,30 @@ class Jbbed {
         $(container).addClass('jbbed-fullscreen');
         $(this).addClass('fullscreen-active');
       }
-    })
-
-    // on click generate preview when user show preview
-    preview.html('');
-    $(tabBtn).on("click", function () {
-      const tabButton = editor.parent().prev().children("li");
-      tabButton.removeClass("active");
-      $(this).addClass("active");
-      if ($(this).hasClass("edit")) {
-        $('.button-' + ID).removeClass('jbbed-disabled').prop('disabled', false);
-        editor.show();
-        preview.hide();
-        preview.html('');
-      } else {
-        editor.hide();
-        $('.button-' + ID).addClass('jbbed-disabled').prop('disabled', true);
-        
-        // generate preview
-        let html = instance.generatePreview(editor.val());
-        preview.html(html);
-
-        // spoiler
-        instance.spoiler();
-
-        // Add script that requires running after preview is generated.
-        instance.afterPreview( preview );
-        
-        // show preview
-        preview.show();
-      }
     });
+
   }
 
   /**
-   * Set position caret
+   * Create BBCode
    */
-  setDataPosition( $ ) {
-    const editor = this.editor,
-          indent = this.params.textareaArgs.indent;
+  doBBCode(thisButton) {
+    const 
+    myeditor        = this.editor,
+    modal           = this.params.modal,
+    inselect        = Object.getOwnPropertyNames(this.params.select),
+    single          = this.params.single,
+    sizeUnit        = this.params.sizeUnit,
+    showPreview     = this.params.showPreview,
+    tagTranslate    = this.params.tagTranslate,
+    localizeMsg     = this.params.localizeMessages,
+    allowed         = this.allowed;
 
-    // indent textarea
-    Jbbed.textareaIndent( editor.attr('id'), indent );
-
-    // set data start and end
-    editor.attr("data-start", 0);
-    editor.attr("data-end", 0);
-
-    // select string and stored positions
-    editor.on("select click keyup keydown tap", function () {
-      const start = $(this)[0].selectionStart,
-            end = $(this)[0].selectionEnd;
-      $(this).attr("data-start", start);
-      $(this).attr("data-end", end);
-    });
-  }
-
-  /**
-   * Create BBCode and put in textarea
-   */
-  bbCodeFactory(thisButton) {
-    const modal           = this.params.modal,
-          inselect        = Object.getOwnPropertyNames(this.params.select),
-          single          = this.params.single,
-          sizeUnit        = this.params.sizeUnit,
-          showPreview     = this.params.showPreview,
-          tagTranslate    = this.params.tagTranslate,
-          localizeMsg     = this.params.localizeMessages,
-          allowed         = this.allowed;
-
-    let emojiCode = thisButton.attr("data-emoji");
-
-    let tag = thisButton.attr('data-button'),
-        myeditor = "";
+    let emojiCode = thisButton.attr("data-emoji"),
+        tag = thisButton.attr('data-button');
 
     if( tag === '' || ! allowed.includes(tag) ) {
       return false;
-    }
-
-    if (showPreview === true) {
-      myeditor = thisButton
-        .closest('#' + btnsContainer.id)
-        .next()
-        .next()
-        .children(".jbbed-editor");
-    } else {
-      myeditor = thisButton.closest('#' + btnsContainer.id).next();
     }
 
     // remove all content if push clear button
@@ -1306,213 +1139,98 @@ class Jbbed {
   }
 
   /**
-   * Create window dialog
-   */
-  putDialog( $ ) {
-    const 
-    instance  = this,
-    ID = this.ID;
-    
-    $(document).on("click", '.modal-action-' + ID, function () {
-      instance.dialogFactory($(this));
-    });
-    $('html').on('click', function(e) {
-      if( ! e.target.classList.contains(ID + '-d') ) {
-        $('.dialog-' + ID).remove();
-      }
-    })
-  }
-
-  /**
-   * Put bbtag in textarea
+   * Prepare textarea
    * 
    * @param object $ // jQuery object
    */
-  putBBCode( $ ) {
+  textarea( $ ) {
     const 
-    instance = this,
-    ID = this.ID;
+    instance        = this,
+    ID              = this.ID,
+    editor          = this.editor,
+    indent          = this.params.textareaArgs.indent,
+    textareaArgs    = this.params.textareaArgs;
 
+    // add params to textarea editor
+    Jbbed.addProp(editor, textareaArgs);
+
+    // indent textarea
+    Jbbed.textareaIndent( editor.attr('id'), indent );
+
+    // set data start and end
+    editor.attr("data-start", 0);
+    editor.attr("data-end", 0);
+
+    // select string and stored positions
+    editor.on("select click keyup keydown tap", function () {
+      const start = $(this)[0].selectionStart,
+            end = $(this)[0].selectionEnd;
+      $(this).attr("data-start", start);
+      $(this).attr("data-end", end);
+    });
+
+    // put BBcode in textarea
     $(document).on("click", '.button-action-' + ID, function () {
-      instance.bbCodeFactory($(this));
+      instance.doBBCode($(this));
     });
 
     $(document).on("change", '.select-action-' + ID, function () {
-      instance.bbCodeFactory($(this));
+      instance.doBBCode($(this));
     });
   }
 
   /**
-   * Generate Preview
-   * 
-   * @param {string} string
+   * Add spoiler script to spoiler bbTag
    */
-  generatePreview( string ) {
-    const instance  = this,
-          autop     = this.params.previewArgs.autop;
+  spoiler() {
 
-    // preformat
-    let newstring = Jbbed.preformat( string );
-
-    // decode bbtags
-    newstring = Jbbed.convert(
-      newstring,
-      instance.allowed.join('|'),
-      instance.params.tagTranslate,
-      instance.params.video
+    const 
+    ID           = this.ID,
+    target       = this.params.spoilerArgs.className,
+    buttonHide   = this.params.spoilerArgs.buttonHide,
+    buttonShow   = this.params.spoilerArgs.buttonShow,
+    slide        = this.params.spoilerArgs.slide,
+    spoilerContainer = Jbbed.createElement(
+      'div',
+      {
+        cls: 'jbbed-spoiler-container'
+      }
+    ),
+    button = Jbbed.createElement(
+      'button',
+      {
+        textContent: buttonShow,
+        cls: 'button-spoiler-' + ID + ' jbbed-button-spoiler'
+      }
     );
 
-    // autop
-    if( autop === true ) {
-      newstring = Jbbed.autop( newstring );
-    }
+    $('.' + target).wrap(spoilerContainer);
+    $(button).insertAfter('.' + target);
 
-    return newstring;
-  }
+    const id = '.button-spoiler-' + ID;
 
-  /**
-   * Convert tag BB in html tag
-   * @param {string} string
-   * @param {string} allowed
-   * @param {object} tagTranslate
-   * @param {object} videoParams
-   * @returns string
-   */
-  static convert(
-    string,
-    allowed = "",
-    tagTranslate = {},
-    videoParams = {}
-  ) {
-    if (typeof string === "undefined") {
-      return;
-    }
-    let newstring = string;
-
-    // check if tag is allowed
-    if (allowed.toString().trim().length > 0) {
-      const regex = new RegExp("\\[\\/?(" + allowed + ")\\s*(.*?)\\]", "gm"),
-            matches = string.match(regex);
-      for (const m in matches) {
-        const to = matches[m].slice(1, -1);
-        newstring = newstring.replace("[" + to + "]", "###" + to + "###");
-      }
-      // remove unallowed bbtags && restore bbtag for allowed tags
-      newstring = newstring
-        .replace(/\[(\/?[a-z0-9]+)(=(.*?))?\]/g, "")
-        .replace(/\/?###(.*?)###/g, "[$1]");
-    }
-
-    // translate bbcode with attributes or bbcode alias
-    for( let [bbTag, value] of Object.entries( tagTranslate ) ) {
-      value = Jbbed.explodeString(value, '|', 3);
-      const htmlTag   = value[0].trim();
-      const attrs     = value[1].trim();
-      let filter      = ".*?";
-      if ( typeof value[2].trim().length > 0 ) {
-        filter = value[2].trim();
-      }
-
-      if( attrs.length === 0 ) {
-        newstring = newstring
-          .replaceAll("[" + bbTag + "]", "<" + htmlTag + ">")
-          .replaceAll("[/" + bbTag + "]", "</" + htmlTag + ">");
-        continue;
-      }
-
-      if(  attrs.length > 0 && attrs.indexOf('$1') === -1 ) {
-        newstring = newstring
-          .replaceAll("[" + bbTag + "]", "<" + htmlTag + ' ' + attrs + ">")
-          .replaceAll("[/" + bbTag + "]", "</" + htmlTag + ">");
-        continue;
-      }
-
-      const regex = new RegExp("\\[(" + bbTag + ")=(" + filter + ")\\]", "gmi"),
-            matches = newstring.matchAll(regex);
-      for (const m of matches) {
-        
-        const to = m[0].slice(1, -1),
-              value = m[2];
-
-        let tag   = htmlTag;
-        let attr  = attrs.replace("$1", value);
-        let space = ' ';
-        // case in which the htmltag is also an attribute of the BBCode
-        if( ( tag === '' || tag === '*' ) && attrs === '$1'  ) {
-          tag = attr;
-          attr = '';
-          space = '';
+    $(id).on("click", function() {
+      const btn = $(this);
+      btn.prev().toggle(slide, function() {
+        if( ! $(this).is(':hidden')) { // show
+          btn.text(buttonHide);
+        } else { // hide
+          btn.text(buttonShow)
         }
-        let open = tag + space + attr;
-        let close = tag;
+      });
+    });
 
-        newstring = newstring
-          .replace("[" + to + "]", "<" + open + ">")
-          .replace("[/" + bbTag + "]", "</" + close + ">");
-      }
-    }
-
-    // fill video
-    const matches = newstring.matchAll(/\[vid=([^<>\]\[\s]+)\]/g);
-    for (const v of matches) {
-      const iframe = Jbbed.getVideo(v[1], videoParams);
-      newstring = newstring.replace(v[0], iframe);
-    }
-
-    // create xpost container and fill
-    const xpost = newstring.matchAll(/\[xpost=([^<>\]\[\s]+)\]/g);
-    for (const v of xpost) {
-      const r = Math.random();
-      const id = Jbbed.randomString(r, 5);
-      newstring = newstring.replace(v[0], Jbbed.xpostContainer(id));
-      Jbbed.xpost(v[1], id);
-    }
-
-    // add jsf container
-    const jsf = newstring.matchAll(/\[jsf=([^<>\]\[\s]+)\]/g);
-    for (const v of jsf) {
-      const r = Math.random();
-      const id = Jbbed.randomString(r, 5);
-      newstring = newstring.replace(v[0], Jbbed.jsfContainer(id, v[1]));
-    }
-
-    // convert tags without attrs
-    newstring = newstring.replace(/\[(\/?[a-z0-9]+)(=(.*?))?\]/g, "<$1$2>");
-    return newstring;
   }
 
   /**
-   * Create jsf container
-   * @param {string} id
-   * @returns string
+   * Append jsfiddle snippet
    */
-  static jsfContainer(id, src) {
+  jsf() {  
 
-    const pattern_jsf  = /(\/\/)?(www\.)?jsfiddle\.net/g,
-          test_jsf     = pattern_jsf.test(src);
-
-    if( test_jsf === true ) {
-      const container = Jbbed.createElement(
-        'span',
-        {
-          id: 'jsf-' + id,
-          cls: 'jsfiddle-snippet',
-          data: 'data-src:' + src.replace(/http(s):?/g, '')
-        }
-      )
-      return container.outerHTML;
-    }
-    
-  }
-
-  /**
-   * Append jsfiddle
-   * @param {object} preview 
-   * @param {string} src 
-   * @param {object} attrs
-   * @returns 
-   */
-  static jsfSnippet( preview, args = {} ) {  
+    const 
+    args      = this.params.jsfPlay,
+    previewId = this.frame.preview.id,
+    preview   = $('#' + previewId);
 
     let attrs = '';
     if( args.output !== 'all') {
@@ -1541,154 +1259,350 @@ class Jbbed {
   }
 
   /**
+   * Do Html for preview
+   */
+  doHtml() {
+    const
+    editor        = this.editor,
+    preview       = this.frame.preview,
+    autop         = this.params.previewArgs.autop,
+    allowed       = this.allowed.join('|'),
+    tagTranslate  = this.params.tagTranslate,
+    videoParams   = this.params.video,
+    string        = $(editor).val()
+
+    // convert special chars and newline
+    let newstring = string         
+      .replace(/</g, "&lt;") // convert < special char
+      .replace(/>/g, "&gt;") // convert > special char            
+      .replace(/\n|\r|\r\n/gm, '<br>');  // convert newline in br    
+      
+    // remove br from lists
+    const matched = newstring.match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/gs);
+    for(const m in matched ) {
+      let mat = matched[m].match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/s);
+      const regex = new RegExp('(>|\\])(\\s+)', 'gms');
+      const prev = mat[2];
+      const replaced = prev.replace(regex, '$1').replace(/\s*<br>{1,}\s*/g, '');
+      newstring = newstring.replace(prev, replaced);
+    }
+
+    // now, check if tag is allowed
+    if (allowed.toString().trim().length > 0) {
+      const regex = new RegExp("\\[\\/?(" + allowed + ")\\s*(.*?)\\]", "gm"),
+            matches = newstring.match(regex);
+      for (const m in matches) {
+        const to = matches[m].slice(1, -1);
+        newstring = newstring.replace("[" + to + "]", "###" + to + "###");
+      }
+      // remove unallowed bbtags && restore bbtag for allowed tags
+      newstring = newstring
+        .replace(/\[(\/?[a-z0-9]+)(=(.*?))?\]/g, "")
+        .replace(/\/?###(.*?)###/g, "[$1]");
+    }
+
+    // translate bbcode with attributes or bbcode alias
+    for( let [bbTag, value] of Object.entries( tagTranslate ) ) {
+      value = Jbbed.explodeString(value, '|', 3);
+      const htmlTag   = value[0].trim();
+      const attrs     = value[1].trim();
+      let filter      = ".*?";
+      if ( typeof value[2].trim().length > 0 ) {
+        filter = value[2].trim();
+      }
+
+      // simple translate (no attrs, but the html tag is different from the bbcode tag)
+      if( attrs.length === 0 ) {
+        newstring = newstring
+          .replaceAll("[" + bbTag + "]", "<" + htmlTag + ">")
+          .replaceAll("[/" + bbTag + "]", "</" + htmlTag + ">");
+        continue;
+      }
+
+      // static translate (attrs does not require value substitution)
+      if(  attrs.length > 0 && attrs.indexOf('$1') === -1 ) {
+        newstring = newstring
+          .replaceAll("[" + bbTag + "]", "<" + htmlTag + ' ' + attrs + ">")
+          .replaceAll("[/" + bbTag + "]", "</" + htmlTag + ">");
+        continue;
+      }
+
+      // dynamic translate (attrs require value substitution)
+      const regex = new RegExp("\\[(" + bbTag + ")=(" + filter + ")\\]", "gmi"),
+            matches = newstring.matchAll(regex);
+      for (const m of matches) {
+        
+        const to = m[0].slice(1, -1),
+              value = m[2];
+
+        let tag   = htmlTag;
+        let attr  = attrs.replace("$1", value);
+        let space = ' ';
+        // case in which the htmltag is also an attribute of the BBCode
+        if( ( tag === '' || tag === '*' ) && attrs === '$1'  ) {
+          tag = attr;
+          attr = '';
+          space = '';
+        }
+        let open = tag + space + attr;
+        let close = tag;
+
+        newstring = newstring
+          .replace("[" + to + "]", "<" + open + ">")
+          .replace("[/" + bbTag + "]", "</" + close + ">");
+      }
+    }
+
+    // If the html pre tag is used, the content will be wrapped in <code> first.
+    // The substitution is made here, because it could also be that the user of 
+    // the script decides to assign attributes to the pre tag
+    if( tagTranslate.code[0] === 'pre' ) {
+      newstring = newstring.replace(/(<pre>)(.*?)(<\/pre>)/g, '$1<code>$2</code>$3');
+    }
+
+    // fill video in newstring
+    const matches = newstring.matchAll(/\[vid=([^<>\]\[\s]+)\]/g);
+    for (const v of matches) {
+      const iframe = Jbbed.buildVid(v[1], videoParams);
+      newstring = newstring.replace(v[0], iframe);
+    }
+
+    // create jsf container and fill in newstring
+    const jsf = newstring.matchAll(/\[jsf=([^<>\]\[\s]+)\]/g);
+    for (const v of jsf) {
+      const r = Math.random(),
+            id = Jbbed.randomString(r, 5),
+            pattern_jsf  = /(\/\/)?(www\.)?jsfiddle\.net/g,
+            test_jsf     = pattern_jsf.test(v[1]);
+      if( test_jsf === true ) {
+        newstring = newstring.replace(v[0],  Jbbed.createElement(
+          'span',
+          {
+            id: 'jsf-' + id,
+            cls: 'jsfiddle-snippet',
+            data: 'data-src:' + v[1].replace(/http(s):?/g, '')
+          },
+          true
+        ));
+      }
+    }
+
+    // convert tags without attrs
+    newstring = newstring.replace(/\[(\/?[a-z0-9]+)(=(.*?))?\]/g, "<$1$2>");
+
+    // add autop
+    if( autop === true ) {
+
+      // remove previous p
+      let newstring = string.replace(/<\/?p>/gm, '');
+
+      // list of html block elements
+      const arr = [
+        'ol','ul','pre','blockquote','hr','h1','h2','h3','h4','h5','h6',
+        'address','article','aside','canvas','dd','div','dl','dt','fieldset',
+        'figcaption','figure','footer','form','header','li','main',
+        'nav','noscript','section','table','video','tfoot','nav',
+        'table','details','dialog','hgroup','tbody','td','th','thead',
+        'noframes','menu'
+      ];
+
+      const regex  = new RegExp('<br>{1,}|<\\\/p><p>{1,}(<(' + arr.join('|') + ')>)', 'gms');
+      const regex2 = new RegExp('(<\\\/(' + arr.join('|') + ')>)<\\\/p>', 'gms');
+
+      newstring = newstring
+      .replace(/<br><br>/gms, '</p><p>')
+      .replace(regex, '</p>$1')
+      .replace(regex2, '$1') // remove closed p after block elements
+      .replace(/(<(hr)>)<\/p>/gms, '$1') // only single tags
+      .replace(/<\/p>[^<]/gms, '<br>')
+      .replace(/<\/p>$/gms, ''); // remove last closed p tag
+
+      newstring = '<p>' + newstring + '</p>';
+
+    }
+
+    // add html content to preview
+    $('#' + preview.id).html(newstring);
+
+    // initialize spoiler
+    this.spoiler();
+
+    // initialize jsfiddle snippet
+    this.jsf();
+
+  }
+
+  /**
+   * Add tabs to switch editor -> preview
+   * 
+   * @param object $ // jQuery object
+   */
+  preview( $ ) {
+    const 
+    ID              = this.ID,
+    instance        = this,
+    localizeButtons = this.params.localizeButtons,
+    editor          = this.editor,
+    previewContainer= this.frame.preview,
+    buttonsIcon     = this.params.buttonsIcon,
+    previewArgs     = this.params.previewArgs,
+    showPreview     = this.params.showPreview,
+    buttonAttrs     = [],
+    label           = [],
+    customClass     = [],
+    title           = [],
+    tab             = this.frame.tab,
+    tabItem         = [],
+    tabbedID        = 'tabbed-' + ID,
+    tabButtons      = ['edit', 'preview'];
+
+    // hide preview if showPreview is set to false
+    if ( showPreview === false ) {
+      return false;
+    }
+
+    // build tabs and preview
+    for( const b in tabButtons ) {
+      let a = '';
+      switch(tabButtons[b]) {
+        case 'edit'       : a = ' active jbbed-tab-edit ' + tabbedID; break;
+        case 'preview'    : a = ' jbbed-tab-preview ' + tabbedID; break;
+      }
+      
+      this.localizeButtons(tabButtons[b]);
+      buttonAttrs[b] = this.buttonLocalized;
+      label[b]       = ( buttonsIcon === true ? '' : buttonAttrs[b].label);
+      customClass[b] = buttonAttrs[b].className.length > 0 ? ' ' + buttonAttrs[b].className : '';
+      title[b]       = buttonAttrs[b].title.length > 0 ? buttonAttrs[b].title : '';
+
+      tabItem[b] = Jbbed.createElement(
+        'li',
+        {
+          title: title[b],
+          id: tabButtons[b] + '-' + ID,
+          cls: 'tab' + ' ' + tabButtons[b] + a + customClass[b]
+        }
+      )
+    }
+
+    $(tab).append(tabItem)
+    $(tab).insertBefore(editor);
+    const tabBtn = $('.' + tabbedID),
+          preview = $('#' + previewContainer.id),
+          wrapperTab = Jbbed.createElement(
+      'div', {
+        cls: 'jbbed-wrapper-tab',
+        id: 'wrapper-tab-' + ID
+      }
+    );
+
+    editor.wrap(wrapperTab);
+    editor.parent().append(preview);
+      
+    // add params for preview
+    Jbbed.addProp(preview, previewArgs);
+
+    // on click generate preview when user show preview
+    preview.html('');
+    $(tabBtn).on("click", function () {
+      const tabButton = editor.parent().prev().children("li");
+      tabButton.removeClass("active");
+      $(this).addClass("active");
+      if ($(this).hasClass("edit")) {
+        $('.button-' + ID).removeClass('jbbed-disabled').prop('disabled', false);
+        editor.show();
+        preview.hide();
+        preview.html('');
+      } else {
+        editor.hide();
+        $('.button-' + ID).addClass('jbbed-disabled').prop('disabled', true);
+        
+        // generate preview
+        instance.doHtml();
+        
+        // show preview
+        preview.show();
+      }
+    });
+  }
+    /**
    * Get video. Supported Youtube and Rumble
    * @param {string} url
    * @param {object} params
    */
-  static getVideo(url, params = {}) {
-    if (
-      url.trim().length === 0 ||
-      typeof url === "undefined" ||
-      url === "null"
-    ) {
-      return;
-    }
-
-    let iframe = "";
-    const parse_url   = new URL(url),
-          pattern_yt  = /(www\.)?youtu(\.)?be(\.com)?/g,
-          test_yt     = pattern_yt.test(url),
-          pattern_rum = /(www\.)?rumble\.com/g,
-          test_rum    = pattern_rum.test(url);
-
-    // yt
-    if (test_yt === true) {
-      
-      let code = parse_url.searchParams.get("v");
-      if (code == null) {
-        code = parse_url.pathname.slice(1);
-      }
-      if (code === "null" || typeof code === "undefined") {
+    static buildVid(url, params = {}) {
+      if (
+        url.trim().length === 0 ||
+        typeof url === "undefined" ||
+        url === "null"
+      ) {
         return;
       }
-      if (code.search("embed") > -1) {
-        code = code.substring(6);
-      }
-
-      const attrs = Jbbed.explodeString( params.youtube, '|' ),
-            width = attrs[0],
-            height = attrs[1],
-            src = "https://www.youtube-nocookie.com/embed/" + code + "?controls=1";
-
-      iframe =
-        '<iframe width="' +
-        width +
-        '" height="' +
-        height +
-        '" src="' +
-        src +
-        '" title="Youtube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
-    
-    } else if (test_rum === true) {
+  
+      let iframe = "";
+      const parse_url   = new URL(url),
+            pattern_yt  = /(www\.)?youtu(\.)?be(\.com)?/g,
+            test_yt     = pattern_yt.test(url),
+            pattern_rum = /(www\.)?rumble\.com/g,
+            test_rum    = pattern_rum.test(url);
+  
+      // yt
+      if (test_yt === true) {
+        
+        let code = parse_url.searchParams.get("v");
+        if (code == null) {
+          code = parse_url.pathname.slice(1);
+        }
+        if (code === "null" || typeof code === "undefined") {
+          return;
+        }
+        if (code.search("embed") > -1) {
+          code = code.substring(6);
+        }
+  
+        const attrs = Jbbed.explodeString( params.youtube, '|' ),
+              width = attrs[0],
+              height = attrs[1],
+              src = "https://www.youtube-nocookie.com/embed/" + code + "?controls=1";
+  
+        iframe =
+          '<iframe width="' +
+          width +
+          '" height="' +
+          height +
+          '" src="' +
+          src +
+          '" title="Youtube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
       
-      let code = parse_url.pathname.slice(7, -1);
-
-      if (code === "null" || typeof code === "undefined") {
-        return;
+      } else if (test_rum === true) {
+        
+        let code = parse_url.pathname.slice(7, -1);
+  
+        if (code === "null" || typeof code === "undefined") {
+          return;
+        }
+  
+        const attrs =  Jbbed.explodeString( params.rumble, '|' ),
+              width = attrs[0],
+              height = attrs[1],
+              src = "https://rumble.com/embed/" + code + "/?pub=4";
+  
+        iframe =
+          '<iframe class="rumble" width="' + width + '" height="' + height + '" src="' + src + '" frameborder="0" allowfullscreen></iframe>';
       }
-
-      const attrs =  Jbbed.explodeString( params.rumble, '|' ),
-            width = attrs[0],
-            height = attrs[1],
-            src = "https://rumble.com/embed/" + code + "/?pub=4";
-
-      iframe =
-        '<iframe class="rumble" width="' + width + '" height="' + height + '" src="' + src + '" frameborder="0" allowfullscreen></iframe>';
-    }
-
+  
     return iframe;
-  }
-
-  /**
-   * Create xpost container
-   * @param {string} id
-   * @returns string
-   */
-  static xpostContainer(id) {
-    const el = document.createElement("div");
-    el.id = id;
-    return el.outerHTML;
-  }
-
-  /**
-   * Xpost Generator
-   * docs: https://developer.twitter.com/en/docs/twitter-for-websites/embedded-tweets/overview
-   * 
-   * @params {string} url
-   * @params [string] id
-   */
-  static xpost(url, id) {
-    const parse_url = new URL(url),
-          path = parse_url.pathname.split('/'),
-          tid  = path.slice(-1)[0];
-
-    window.twttr = (function (d, s, id) {
-      var js,
-        fjs = d.getElementsByTagName(s)[0],
-        t = window.twttr || {};
-      if (d.getElementById(id)) return t;
-      js = d.createElement(s);
-      js.id = id;
-      js.src = "https://platform.twitter.com/widgets.js";
-      fjs.parentNode.insertBefore(js, fjs);
-      t._e = [];
-
-      t.ready = function (f) {
-        t._e.push(f);
-      };
-      return t;
-    })(document, "script", "twitter-wjs");
-
-    twttr.ready(function (twttr) {
-      twttr.widgets
-        .createTweet(tid, document.getElementById(id), {
-          theme: "light", //or dark
-          conversation: "none",
-          dnt: true,
-        })
-        .then(function (el) {
-          //console.log("Tweet added.");
-        });
-    });
-  }
-
-  /**
-   * Build allowed tags
-   * @param {object} bars 
-   * @param {object} selectiveRemove 
-   * @param {string} sep
-   * @returns 
-   */
-  static buildAllowedTags( buttons, selectiveRemove, sep = '#') {
-    const allowed   = [],
-          to_remove = Jbbed.explodeString( selectiveRemove, '|' );
-    for( const b in buttons ) {
-      if( to_remove.includes(buttons[b] ) || buttons[b] === sep ) {
-        continue;
-      } else {
-        allowed.push(buttons[b]);
-      }
-    }
-    return allowed;
   }
 
   /**
    * Create element
    * @param {string} tag 
    * @param {object} attrs 
+   * @param {bool} html
+   * @param {bool} inner
    * @returns object
    */
-  static createElement( tag, attrs = {}) {
+  static createElement( tag, attrs = {}, html = false, inner = false) {
 
     const el = document.createElement(tag);
     if( typeof attrs.id !== 'undefined') el.id = attrs.id;
@@ -1743,17 +1657,17 @@ class Jbbed {
         if( data[d].indexOf(':') < 1 ) {
           continue;
         }
-      	const arg = data[d].split(':');
+      	const arg = Jbbed.cutString( data[d], ':', 1 )
       	el.setAttribute( arg[0], arg[1] );
       }
     } else {
         if( typeof data === 'string' && data.indexOf(':') > 0 ) {
-          const arg = data.split(':');
+          const arg = Jbbed.cutString( data, ':', 1 );
     		  el.setAttribute( arg[0], arg[1] );
         }	
     }
 
-    return el;
+    return html === true ? ( inner === true ? el.innerHTML : el.outerHTML ) : el;
 
   }
 
@@ -1829,7 +1743,6 @@ class Jbbed {
             element[0].style.width = prop[p];
             break;
           case "height":
-            console.log(p);
             element[0].style.height = prop[p];
             break;
           case 'autop':
@@ -1873,92 +1786,6 @@ class Jbbed {
       .substring(2, length + 2);
     string = m + t + d;
     return string.replace(/\./g, '');
-  }
-
-  /**
-   * Localize buttons and tabs
-   * @param {object} localize 
-   * @param {string} string 
-   * @returns object
-   */
-  static localizeButtons( localize, button) {
-
-    let string = button;
-    if( typeof localize[button] === 'object' && localize[button].length > 0 ) {
-      string = localize[button];
-    } else {
-      string = ['label:' + button, 'title:' + button, 'className:'];
-    }
-
-    let buttonAttrs = {};
-    for( const s in string ) {
-      if( string[s].indexOf(':') > -1 ) {
-        const v = string[s].split(':', 2);
-        buttonAttrs[v[0]] = v[1];
-      }
-    }
-
-    return buttonAttrs;
-  }
-
-  /**
-   * Preformat string before to be converted
-   * 
-   * @param {string} string
-   * @returns
-   */
-  static preformat( string ) {
-
-    let newstring = string         
-      .replace(/</g, "&lt;") // convert < special char
-      .replace(/>/g, "&gt;") // convert > special char            
-      .replace(/\n|\r|\r\n/gm, '<br>');  // convert newline in br    
-      
-    // remove br from lists
-    const matched = newstring.match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/gs);
-    for(const m in matched ) {
-      let mat = matched[m].match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/s);
-      const regex = new RegExp('(>|\\])(\\s+)', 'gms');
-      const prev = mat[2];
-      const replaced = prev.replace(regex, '$1').replace(/\s*<br>{1,}\s*/g, '');
-      newstring = newstring.replace(prev, replaced);
-    }
-
-    return newstring;
-  }
-
-  /**
-   * Convert br in p
-   * @param {string} string 
-   * @returns 
-   */
-  static autop( string ) {
-
-    // remove previous p
-    let newstring = string.replace(/<\/?p>/gm, '');
-
-    // list of html block elements
-    const arr = [
-      'ol','ul','pre','blockquote','hr','h1','h2','h3','h4','h5','h6',
-      'address','article','aside','canvas','dd','div','dl','dt','fieldset',
-      'figcaption','figure','footer','form','header','li','main',
-      'nav','noscript','section','table','video','tfoot','nav',
-      'table','details','dialog','hgroup','tbody','td','th','thead',
-      'noframes','menu'
-    ];
-
-    const regex  = new RegExp('<br>{1,}|<\\\/p><p>{1,}(<(' + arr.join('|') + ')>)', 'gms');
-    const regex2 = new RegExp('(<\\\/(' + arr.join('|') + ')>)<\\\/p>', 'gms');
-
-    newstring = newstring
-    .replace(/<br><br>/gms, '</p><p>')
-    .replace(regex, '</p>$1')
-    .replace(regex2, '$1') // remove closed p after block elements
-    .replace(/(<(hr)>)<\/p>/gms, '$1') // only single tags
-    .replace(/<\/p>[^<]/gms, '<br>')
-    .replace(/<\/p>$/gms, ''); // remove last closed p tag
-
-    return '<p>' + newstring + '</p>';
   }
 
   /**
@@ -2125,37 +1952,4 @@ class Jbbed {
     return emoji;
   }
 
-  /**
-   * Domize preview
-   * @param {object} ob 
-   * @param {string} html 
-   */
-  static domizePreview( ob, html) {
-    const parser = new DOMParser(),
-          h = parser.parseFromString(html, 'text/html');
-    ob.innerHtml = '';
-    ob.innerText = '';
-    for( const el of h.childNodes) {
-      for( const e of el.childNodes) {
-        if( e.tagName === 'BODY') {
-          for(const i of e.children) {
-            ob.append(i);
-          }
-        } 
-      }
-    }
-  }
-
 } // end class
-
-/**
- * Standalone function to convert jbbed
- * @param {string} string 
- * @param {string} allowed 
- * @param {object} tagTranslate
- * @param {object} videoParams 
- * @returns 
- */
-function convertjbbed(string, allowed, tagTranslate, videoParams) {
-  return Jbbed.convert(string, allowed, tagTranslate, videoParams);
-}

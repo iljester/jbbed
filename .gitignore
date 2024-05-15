@@ -9,3 +9,7 @@ jbbed copy 8.js
 jbbed copy.php
 example.html
 jbbed copy 9.js
+.ignore/jbbed copy 10.js
+.ignore/jbbed copy 11.js
+.ignore/jbbed copy 12.js
+.ignore/jbbed copy 13.js

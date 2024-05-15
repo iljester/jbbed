@@ -262,11 +262,11 @@
 }
 
 .jbbed-modern .jbbicon-i:before {
-  content: "\e813"
+  content: "\e814"
 }
 
 .jbbed-modern .jbbicon-u:before {
-  content: "\e814"
+  content: "\e813"
 }
 
 .jbbed-modern .jbbicon-s2:before {
@@ -333,28 +333,23 @@
     position: relative;
 }
 
-.jbbed-tab-editor li {
+.jbbed-tab-editor li,
+.jbbed-fullscreen-button {
     display: inline-block;
     padding: 10px 10px 9px;
     background-color: #f7f7f7;
     border: 1px solid #ccc;
     margin-bottom: 0;
-    margin-left: 5px;
     cursor: pointer;
 }
 
-.jbbed-tab-editor li.jbbed-tab-fullscreen {
-  margin: 0;
-}
-
-.jbbed-tab-editor.jbbed-buttons-left li.jbbed-tab-edit,
-.jbbed-tab-editor.jbbed-buttons-left li.jbbed-tab-preview {
-  margin-right: 5px;
-  margin-left: 0;
+.jbbed-tab-editor .jbbed-tab-preview {
+  margin-left: 5px;
 }
 
 .jbbed-modern .jbbed-tab-editor li,
-.jbbed-modern .jbbed-tab-editor li.active {
+.jbbed-modern .jbbed-tab-editor li.active,
+.jbbed-modern .jbbed-fullscreen-button {
   border: 1px solid #ddd;
   padding: 5px 10px;
   border-radius: 4px;
@@ -364,7 +359,8 @@
 }
 
 .jbbed-modern.jbbed-dark .jbbed-tab-editor li,
-.jbbed-modern.jbbed-dark .jbbed-tab-editor li.active {
+.jbbed-modern.jbbed-dark .jbbed-tab-editor li.active,
+.jbbed-modern.jbbed-dark .jbbed-fullscreen-button {
   background-color: transparent;
   color: #c7c7c7;
 }
@@ -375,27 +371,35 @@
 }
 
 .jbbed-modern .jbbed-tab-editor li.active,
-.jbbed-modern .jbbed-tab-fullscreen.fullscreen-active {
+.jbbed-modern .jbbed-fullscreen-button.fullscreen-active {
   background-color: #000;
   color: #fff;
 }
 
 .jbbed-modern.jbbed-dark .jbbed-tab-editor li.active,
-.jbbed-modern.jbbed-dark .jbbed-tab-fullscreen.fullscreen-active {
+.jbbed-modern.jbbed-dark .jbbed-fullscreen-button.fullscreen-active {
   background-color: #ffffff3b;
   color: #c5c5c5;
 }
 
-.jbbed-tab-editor li.jbbed-tab-fullscreen {
-  position: absolute;
-  left: 0;
-  padding: 5px;
-  border-radius: 4px;
+.jbbed-fullscreen-container {
+  position: relative;
+  text-align: right;
 }
 
-.jbbed-tab-editor li.jbbed-tab-fullscreen.right {
+.jbbed-fullscreen-button {
+  margin: 0;
+  position: absolute;
   right: 0;
-  left: auto;
+  padding: 5px;
+  border-radius: 4px;
+  z-index: 999;
+  border: 0 none;
+}
+
+.jbbed-fullscreen-button.no-show-preview {
+  position: relative;
+  margin-bottom: 10px;
 }
 
 /* Dialog */
@@ -627,7 +631,6 @@
 }
 
 .jbbed-preview pre {
-  font-family: monospace;
   font-size: 14px;
   background-color: #e0ffe0;
   color: #086208;
@@ -640,6 +643,10 @@
   white-space: -pre-wrap;
   white-space: -o-pre-wrap;
   word-wrap: break-word;
+}
+
+.jbbed-preview code {
+  font-family: inconsolata, monaco, monospace;
 }
 
 .jbbed-preview blockquote {

@@ -49,22 +49,12 @@ Ciao come
 <br>
 <br>
 <div id="ciao">
-    <textarea class="a texta" cols="50" rows="10"></textarea>
+    <textarea id="t1" class="a texta" cols="50" rows="10"></textarea>
 </div>
 <script>
 
-$('.texta').jbbedMu({
-    theme: 'dark',
-    modalAttrs: {
-        preview: true,
-        previewBgColor: 'theme',
-        previewTextColor: 'theme',
-        previewSentence: 'ciao',
-        palette: true
-    }
-});
-/*
 $('#t').jbbed({
+    editorID: 'jaqnjjajaj',
     theme: 'modern',
     modalAttrs: {
         preview: true,
@@ -73,7 +63,20 @@ $('#t').jbbed({
         previewSentence: 'ciao',
         palette: true
     }
-});*/
+});
+
+
+$('#t1').jbbed({
+    editorID: 'ioqkkqkq',
+    theme: 'classic',
+    modalAttrs: {
+        preview: true,
+        previewBgColor: 'theme',
+        previewTextColor: 'theme',
+        previewSentence: 'ciao',
+        palette: true
+    }
+});
 </script>
 </body>
 </html>
