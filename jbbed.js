@@ -277,15 +277,6 @@ class Jbbed {
       }
     );
 
-    // emoji container
-    this.frame.emoji = Jbbed.createElement(
-      'div',
-      {
-        cls: 'jbbed-emoji-container',
-        id: 'emoji-container-' + ID
-      }
-    );
-
     // fullscreen frame
     this.frame.fullscreen = Jbbed.createElement(
       'div',
@@ -580,10 +571,10 @@ class Jbbed {
         case 1 : t = 'no'; break;
       }
       this.localizeButtons(t);
-      buttonAttrs[i] = this.buttonLocalized;
-      label[i]      = buttonsIcon === true ? '' : buttonAttrs[i].label;
-      customClass[i] = buttonAttrs[i].className.length > 0 ? ' ' + buttonAttrs[i].className : '';
-      title[i]      = buttonAttrs[i].title.length > 0 ? buttonAttrs[i].title : '';
+      buttonAttrs[i]  = this.buttonLocalized;
+      label[i]        = buttonsIcon === true ? '' : buttonAttrs[i].label;
+      customClass[i]  = buttonAttrs[i].className.length > 0 ? ' ' + buttonAttrs[i].className : '';
+      title[i]        = buttonAttrs[i].title.length > 0 ? buttonAttrs[i].title : '';
     }
    
     // insert buttons ok no
@@ -938,8 +929,6 @@ class Jbbed {
         } else {
           // These buttons must necessarily be displayed in a modal window. 
           // Therefore it is not necessary to insert them into the modal argument
-          // Exceptionally for emoji, you can remove them from buttons. 
-          // In that case, a sidebar will be displayed after the button bars.
           switch(buttons[b]) {
             case 'link'  : modal.push(buttons[b]); break;
             case 'img'   : modal.push(buttons[b]); break;
@@ -993,13 +982,18 @@ class Jbbed {
    */
   fullscreen( $ ) {
     const 
-    ID               = this.ID,
-    fullscreen       = this.frame.fullscreen,
-    buttonsContainer = this.frame.buttons,
-    mainContainer    = this.frame.main,
-    buttonsIcon      = this.params.buttonsIcon,
-    fsButton         = 'fullscreen',
-    noShowPrev       = this.params.showPreview === false ? ' no-show-preview' : ''
+    ID                  = this.ID,
+    fullscreenContainer = this.frame.fullscreen,
+    buttonsContainer    = this.frame.buttons,
+    mainContainer       = this.frame.main,
+    previewContainer    = this.frame.preview,
+    editor              = this.editor[0],
+    buttonsIcon         = this.params.buttonsIcon,
+    tabContainer        = this.frame.tab,
+    fsButton            = 'fullscreen',
+    noShowPrev          = this.params.showPreview === false ? ' no-show-preview' : '',
+    textareaArgsH       = this.params.textareaArgs.height,
+    previewArgsH        = this.params.previewArgs.height;
     
     this.localizeButtons(fsButton);
     const
@@ -1007,9 +1001,8 @@ class Jbbed {
     label            = buttonsIcon === true ? '' : buttonAttrs.label,
     customClass      = buttonAttrs.className.length > 0 ? ' ' + buttonAttrs.className : '',
     title            = buttonAttrs.title.length > 0 ? buttonAttrs.title : '';
-    
 
-    $(fullscreen).insertAfter(buttonsContainer);
+    $(fullscreenContainer).insertAfter(buttonsContainer);
 
     const fullscreenButton = Jbbed.createElement(
       'button',
@@ -1022,14 +1015,24 @@ class Jbbed {
       }
     );
 
-    $(fullscreen).append(fullscreenButton);
+    $(fullscreenContainer).append(fullscreenButton);
     $('#' + fullscreenButton.id).on('click', function() {
-      const container = '#' + mainContainer.id;
-      if( $(container).hasClass('jbbed-fullscreen') ) {
-        $(container).removeClass('jbbed-fullscreen');
+      const containerId = '#' + mainContainer.id,
+            buttonsH    = buttonsContainer.offsetHeight,
+            tabH        = tabContainer.offsetHeight,
+            previewH    = previewContainer.offsetHeight,
+            textareaH   = editor.offsetHeight,
+            fullscreenH = fullscreenContainer.offsetHeight,
+            h           = buttonsH+tabH+fullscreenH;
+      if( $(containerId).hasClass('jbbed-fullscreen') ) {
+        $(containerId).removeClass('jbbed-fullscreen');
         $(this).removeClass('fullscreen-active');
+        $('#' + previewContainer.id).css('height', previewArgsH );
+        $('#' + editor.id).css('height', textareaArgsH );
       } else {
-        $(container).addClass('jbbed-fullscreen');
+        $(containerId).addClass('jbbed-fullscreen');
+        $('#' + previewContainer.id).css('height', ( +h+previewH ) + 'px' );
+        $('#' + editor.id).css('height', (+h+textareaH) + 'px' );
         $(this).addClass('fullscreen-active');
       }
     });
@@ -1263,24 +1266,32 @@ class Jbbed {
    */
   doHtml() {
     const
-    editor        = this.editor,
     preview       = this.frame.preview,
     autop         = this.params.previewArgs.autop,
     allowed       = this.allowed.join('|'),
     tagTranslate  = this.params.tagTranslate,
     videoParams   = this.params.video,
-    string        = $(editor).val()
+    string        = this.editor.val();
 
-    // convert special chars and newline
-    let newstring = string         
+    let newstring = string;
+
+    // first encode all content into code tag
+    const nsb = newstring.matchAll(/\[code\](.*?)\[\/code\]/gms);
+    for(const m of nsb ) {
+      const value = '[code]' + btoa( m[1] ) + '[/code]';
+      newstring = newstring.replace(m[0], value);
+    }
+
+    // then... convert special chars and newline
+    newstring = newstring         
       .replace(/</g, "&lt;") // convert < special char
       .replace(/>/g, "&gt;") // convert > special char            
       .replace(/\n|\r|\r\n/gm, '<br>');  // convert newline in br    
-      
+
     // remove br from lists
-    const matched = newstring.match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/gs);
-    for(const m in matched ) {
-      let mat = matched[m].match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/s);
+    const lst = newstring.match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/gs);
+    for(const m in lst ) {
+      let mat = lst[m].match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/s);
       const regex = new RegExp('(>|\\])(\\s+)', 'gms');
       const prev = mat[2];
       const replaced = prev.replace(regex, '$1').replace(/\s*<br>{1,}\s*/g, '');
@@ -1353,13 +1364,6 @@ class Jbbed {
       }
     }
 
-    // If the html pre tag is used, the content will be wrapped in <code> first.
-    // The substitution is made here, because it could also be that the user of 
-    // the script decides to assign attributes to the pre tag
-    if( tagTranslate.code[0] === 'pre' ) {
-      newstring = newstring.replace(/(<pre>)(.*?)(<\/pre>)/g, '$1<code>$2</code>$3');
-    }
-
     // fill video in newstring
     const matches = newstring.matchAll(/\[vid=([^<>\]\[\s]+)\]/g);
     for (const v of matches) {
@@ -1394,7 +1398,7 @@ class Jbbed {
     if( autop === true ) {
 
       // remove previous p
-      let newstring = string.replace(/<\/?p>/gm, '');
+      newstring = newstring.replace(/<\/?p>/gm, '');
 
       // list of html block elements
       const arr = [
@@ -1411,15 +1415,31 @@ class Jbbed {
 
       newstring = newstring
       .replace(/<br><br>/gms, '</p><p>')
-      .replace(regex, '</p>$1')
+      .replace(regex, '</p>$1') // lost a &?
       .replace(regex2, '$1') // remove closed p after block elements
       .replace(/(<(hr)>)<\/p>/gms, '$1') // only single tags
       .replace(/<\/p>[^<]/gms, '<br>')
-      .replace(/<\/p>$/gms, ''); // remove last closed p tag
+      .replace(/<\/p>$/gms, '') // remove last closed p tag
 
       newstring = '<p>' + newstring + '</p>';
 
     }
+
+   // last: decode content into pre 
+   const nsa = newstring.matchAll(/<pre(\s+[^>]+)?>(.*?)<\/pre>/gms);
+   for(const m of nsa ) {
+    let attrPre = typeof m[1] !== 'undefined' ? m[1] : '';
+    let newVal = atob(m[2]);
+    newVal = newVal.replaceAll('<', '&lt;').replace('>', '&gt;');
+    let nv = newVal.split('\n');
+    const newVal2 = [];
+    for( let i = 0; i < nv.length; i++ ) {
+      newVal2[i] = '<li><code>' + nv[i] + '</code></li>';
+    }
+    const newValS = newVal2.join('');
+    const value = '<pre' + attrPre + '><ol>' + newValS + '</ol></pre>';
+    newstring = newstring.replace(m[0], value);
+   }
 
     // add html content to preview
     $('#' + preview.id).html(newstring);

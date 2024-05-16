@@ -112,11 +112,6 @@
   color: #ebebeb;
 }
 
-.jbbed-container.jbbed-fullscreen .jbbed-editor,
-.jbbed-container.jbbed-fullscreen .jbbed-preview {
-  height: 100% !important;
-}
-
 .jbbed-editor {
   tab-size: 3;
 }
@@ -634,7 +629,7 @@
   font-size: 14px;
   background-color: #e0ffe0;
   color: #086208;
-  padding: 10px;
+  padding: 0 10px;
   border-left: 4px solid green;
   margin-bottom: 0;
   overflow-x: auto;
@@ -647,6 +642,38 @@
 
 .jbbed-preview code {
   font-family: inconsolata, monaco, monospace;
+  white-space: pre-wrap;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+  
+}
+
+.jbbed-preview pre ol {
+  counter-reset: item;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.jbbed-preview pre li {
+  border-bottom: 1px solid #9ed89e63;
+  margin: 2px 5px 2px 0;
+  display: block;
+}
+
+.jbbed-preview pre li:before {
+  content: counter(item) " ";
+  counter-increment: item;
+  margin-right: 10px;
+  display: inline-block;
+  min-width: 20px;
+  text-align: right;
+}
+
+.jbbed-preview pre li:last-child {
+  border: 0 none;
 }
 
 .jbbed-preview blockquote {
