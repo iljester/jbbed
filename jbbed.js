@@ -45,7 +45,7 @@
           mainContainer    = frame.main,
           previewContainer = frame.preview,
           buttonsContainer = frame.buttons,
-          emojiContainer   = frame.emoji;
+          smileysContainer   = frame.smileys;
 
     // add buttons container
     $(buttonsContainer).insertBefore(this);
@@ -110,7 +110,7 @@ class Jbbed {
     editorID: '',
     bars: {
       1: ['b', 'i', 'u', 's', '#', 'link', 'img', 'vid', '#', 'ol', 'ul', 'li', '#', 'quote', 'code'],
-      2: ['size', 'font', 'color', 'head', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'hr', 'spoiler', '#', 'emoji', 'jsf', '#', 'clear'],
+      2: ['size', 'font', 'color', 'head', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'hr', 'spoiler', '#', 'smileys', 'jsf', '#', 'clear'],
     },
     modal: ['xpost', 'size', 'color', 'font', 'head', 'jsf'],
     modalArgs: {
@@ -120,7 +120,7 @@ class Jbbed {
       previewTextColor: 'theme', // or hex color
       palette: true
     },
-    single: ['hr', 'img', 'emoji', 'vid', 'xpost', 'jsf'],
+    single: ['hr', 'img', 'smileys', 'vid', 'xpost', 'jsf'],
     select: {
       size:  ['--', 10,12,14,16,18,20,22,24,26,28,30],
       font:  ['--', 'Arial', 'Times New Roman', 'Lucida Sans', 'Roboto', 'Monospace', 'Courier', 'Helvetica', 'Georgia'],
@@ -178,7 +178,7 @@ class Jbbed {
       output: 'all', // html|css|js|result or all
       theme: 'dark' // dark or ''
     },
-    emoji: true,
+    smileys: true,
     fullscreen: true,
     showPreview: true,
     theme: 'classic',
@@ -210,7 +210,7 @@ class Jbbed {
       preview:      ['label:Preview', 'title:Preview', 'className:jbbicon-preview jbbicon'],
       ok:           ['label:OK', 'title:Ok', 'className:jbbicon-check jbbicon'],
       no:           ['label:NO', 'title:No', 'className:jbbicon-close jbbicon'],
-      emoji:        ['label:Emoji', 'title:Emoji', 'className:jbbicon-emoticon jbbicon'],
+      smileys:        ['label:Smileys', 'title:Smileys', 'className:jbbicon-emoticon jbbicon'],
       spoiler:      ['label:Spoiler', 'title:Spoiler', 'className:jbbicon-spoiler jbbicon'],
       jsf:         ['label:JsFiddle', 'title:JsFiddle', 'className:jbbicon-jsf jbbicon'],
       fullscreen:   ['label:Fullscreen', 'title:Fullscreen', 'className:jbbicon-fullscreen jbbicon']
@@ -326,7 +326,7 @@ class Jbbed {
     let tiny = false;
     if( params.bars === 'tiny') {
       params.bars = { 1: Jbbed.tinyBar };
-      params.emoji = false;
+      params.smileys = false;
       tiny = true;
       this.tiny = tiny;
     }
@@ -454,14 +454,14 @@ class Jbbed {
     localizeMessages = this.params.localizeMessages,
     buttonsIcon      = this.params.buttonsIcon,
     sizeUnit         = this.params.sizeUnit,
-    emoji            = this.params.emoji,
+    smileys            = this.params.smileys,
     video            = this.params.video,
     jbbedD           = ID + '-d';
 
     let type = 'url';
 
-    // emoji button
-    type = dataButton === 'emoji' && emoji !== false ? 'emoji' : type;
+    // smileys button
+    type = dataButton === 'smileys' && smileys !== false ? 'smileys' : type;
 
     // select buttons
     if( inselect.includes(dataButton) ) {
@@ -760,16 +760,16 @@ class Jbbed {
 
         break;
 
-      case 'emoji' :
+      case 'smileys' :
         const 
-        emojis = Jbbed.createElement(
+        smileysContainer = Jbbed.createElement(
           'div',
           {
             id: dataButton + '-list-' + ID,
             cls: 'jbbed-' + dataButton + '-list ' + jbbedD
           }
         ),
-        emojiInput = Jbbed.createElement(
+        smileysInput = Jbbed.createElement(
           'input',
           {
             type: 'hidden',
@@ -793,32 +793,32 @@ class Jbbed {
         $(wrap).append([previewContainer, del]);
 
         let 
-        emoji = this.params.emoji,
-        selected  = typeof emoji !== 'boolean' ? Jbbed.explodeString(emoji, '|') : emoji;
-        emoji = Jbbed.getEmoji(selected);
-        const emojiItemId = dataButton + '-item-' + ID;
-        for( const e in emoji) {
-          const emojiNum = emoji[e].slice(2,-1),
+        smileys = this.params.smileys,
+        selected  = typeof smileys !== 'boolean' ? Jbbed.explodeString(smileys, '|') : smileys;
+        smileys = Jbbed.getSmileys(selected);
+        const smileysItemId = dataButton + '-item-' + ID;
+        for( const e in smileys) {
+          const smileysNum = smileys[e].slice(2,-1),
                 elEm = Jbbed.createElement(
             'button',
             {
-              id: dataButton + '-' + emojiNum + '-' + ID,
-              cls: 'jbbed-button jbbed-emoji ' + emojiItemId + ' ' + jbbedD,
+              id: dataButton + '-' + smileysNum + '-' + ID,
+              cls: 'jbbed-button jbbed-smileys ' + smileysItemId + ' ' + jbbedD,
               type: 'button',
-              data: 'data-value:' + emoji[e],
-              htmlContent: emoji[e]
+              data: 'data-value:' + smileys[e],
+              htmlContent: smileys[e]
             }
           )
-          $(emojis).append(elEm);
+          $(smileysContainer).append(elEm);
         }
-        $('#' + inputContainer.id).append([emojis, emojiInput]);
+        $('#' + inputContainer.id).append([smileysContainer, smileysInput]);
         $(del).insertBefore(previewContainer);
 
-        $(document).on('click', '.' + emojiItemId, function(e) {
+        $(document).on('click', '.' + smileysItemId, function(e) {
           let value = $(this).attr('data-value');
-          let prev = $(emojiInput).val();
+          let prev = $(smileysInput).val();
           $('#' + buttonOk.id).attr('data-value', prev+value);
-          $(emojiInput).val(prev+value);
+          $(smileysInput).val(prev+value);
           if( modalArgs.preview === true ) {
             $(previewContainer).html(prev + value);
           }
@@ -826,10 +826,10 @@ class Jbbed {
 
         $(previewContainer).text('');
         $(document).on('click', '#' + del.id, function(e) {
-          let prev = $(emojiInput).val();
+          let prev = $(smileysInput).val();
           prev = prev.substring(0, prev.length-9);
           $('#' + buttonOk.id).attr('data-value', prev);
-          $(emojiInput).val(prev);
+          $(smileysInput).val(prev);
           $(previewContainer).html(prev);
         })
       break;
@@ -857,7 +857,7 @@ class Jbbed {
     allowed         = this.allowed,
     theme           = this.params.theme,
     buttonsIcon     = this.params.buttonsIcon,
-    emoji           = this.params.emoji,
+    smileys           = this.params.smileys,
     modal           = this.params.modal,
     btnsContainer   = this.frame.buttons,
     separator       = '#';
@@ -888,7 +888,7 @@ class Jbbed {
           continue;
         }
 
-        if( emoji === false && buttons[b] === 'emoji') {
+        if( smileys === false && buttons[b] === 'smileys') {
           continue;
         }
 
@@ -933,7 +933,7 @@ class Jbbed {
             case 'link'  : modal.push(buttons[b]); break;
             case 'img'   : modal.push(buttons[b]); break;
             case 'vid'   : modal.push(buttons[b]); break;
-            case 'emoji' : modal.push(buttons[b]); break;
+            case 'smileys' : modal.push(buttons[b]); break;
           }
           let actionClass = modal.includes(buttons[b]) ? 'modal-action-' + ID + ' ' : 'button-action-' + ID + ' '; // temp per ora.
           const elButton = Jbbed.createElement(
@@ -1054,7 +1054,7 @@ class Jbbed {
     localizeMsg     = this.params.localizeMessages,
     allowed         = this.allowed;
 
-    let emojiCode = thisButton.attr("data-emoji"),
+    let smileysCode = thisButton.attr("data-smileys"),
         tag = thisButton.attr('data-button');
 
     if( tag === '' || ! allowed.includes(tag) ) {
@@ -1093,8 +1093,8 @@ class Jbbed {
     } else {
       // test if link is an email
       attr = Jbbed.testEmail(attr) === true && tag === 'link' ? 'mailto:' + attr : attr;
-      attr = modals.includes(tag) && tag !== 'emoji' ? "=" + attr : attr;
-      emojiCode = modals.includes(tag) && tag === 'emoji' ? attr: emojiCode;
+      attr = modals.includes(tag) && tag !== 'smileys' ? "=" + attr : attr;
+      smileysCode = modals.includes(tag) && tag === 'smileys' ? attr: smileysCode;
     }
 
     // create tag bb for select buttons
@@ -1118,11 +1118,11 @@ class Jbbed {
     
     // check if is a single tag
     if (singles.includes(tag)) {
-      if (tag !== "emoji") {
+      if (tag !== "smileys") {
         wrap = sel + "[" + tag + attr + "]";
         taglen = "[" + tag + attr + "]";
       } else {
-        wrap = sel + emojiCode;
+        wrap = sel + smileysCode;
         taglen = wrap;
       }
     }
@@ -1415,7 +1415,7 @@ class Jbbed {
 
       newstring = newstring
       .replace(/<br><br>/gms, '</p><p>')
-      .replace(regex, '</p>$1') // lost a &?
+      .replace(regex, '</p>&$1') // lost a &?
       .replace(regex2, '$1') // remove closed p after block elements
       .replace(/(<(hr)>)<\/p>/gms, '$1') // only single tags
       .replace(/<\/p>[^<]/gms, '<br>')
@@ -1950,26 +1950,41 @@ class Jbbed {
   }
 
   /**
-   * Generate emoji
+   * 
+   * @param {number} start 
+   * @param {number} end 
+   * @returns array
+   */
+  static arrayRange(start, end) {
+    const d = (e-s)+1, r = [];
+    Array(d).fill(0).forEach(function(n,v) {
+      r[v] = s+v;
+    });
+    return r;
+  }
+
+  /**
+   * Generate smileys
    * @param {array} selected 
    * @returns array
    */
-  static getEmoji( selected = [], number = false) {
+  static getSmileys( selected = [], number = false) {
     selected = Jbbed.explodeString(selected, '|');
-    const emoji = [];
+    const smileysA = [];
     let n = 0;
-    for (let i = 128512; i <= 128567; i++){
-      let e = number === false ? '&#' + i + ';' : i;
+    let smileys = Jbbed.arrayRange(128512,128567);
+    for (let i in smileys){
+      let e = number === false ? '&#' + smileys[i] + ';' : all[i];
       if( Array.isArray(selected) && selected.length > 0 ) {
         if( selected.includes(e) ) {
-        	 emoji[+n] = e;
+          smileysA[+n] = e;
         }
       } else {
-      	emoji[+n] = e;
+      	smileysA[+n] = e;
       }
       n++;
     }
-    return emoji;
+    return smileysA;
   }
 
 } // end class
