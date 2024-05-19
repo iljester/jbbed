@@ -13,7 +13,7 @@
 
   $.fn.jbbedMu = function (params = {}) {
     $(this).each(function() {
-      params.editorID = Jbbed.randomString('jbbed', 5);
+      params.editorID = Jbbed.randomId(Math.random(), 5);
       $(this).jbbed(params);
     });
   }
@@ -23,20 +23,21 @@
     // add class to textarea
     $(this).addClass("jbbed-editor");
 
-    // get id of textarea if exists and set editorID
-    const editorID = $(this).attr('id');
     if( 
-      typeof params.editorID !== 'undefined' &&
-      params.editorID.trim().length === 0 && 
-      typeof editorID !== 'undefined' && 
-      editorID.trim().length > 0 ) 
-    {
-      params.editorID = editorID;
+      typeof $(this).attr('id') !== 'undefined' && 
+      ( typeof params.editorID === 'undefined' ||
+      params.editorID.length === 0 )
+    ) {
+      params.editorID = $(this).selector.substring(1);
     }
 
     // ... else assign id to textarea if not have once
-    if( typeof editorID === 'undefined' ) {
-      $(this).attr('id', 'jbbed-' + params.editorID);
+    if(  
+      typeof $(this).attr('id') === 'undefined' && 
+      typeof params.editorID !== 'undefined' && 
+      params.editorID.length > 0 
+    ) {
+      $(this).attr('id', params.editorID);
     }
 
     // init class
@@ -92,19 +93,52 @@
 class Jbbed {
 
   /**
-   * Properties
+   * The editor ID
    */
   ID = '';
+
+  /**
+   * The target editor
+   */
   editor;
+
+  /**
+   * parameters passed by the user
+   */
   params  = {};
+
+  /**
+   * Editor scaffold
+   */
   frame = {};
-  allowed = [];  
+
+  /**
+   * List of allowed tags
+   */
+  allowed = []; 
+  
+  /**
+   * All buttons
+   */
   allButtons = [];
+
+  /**
+   * The localized button
+   */
   buttonLocalized = {};
+
+  /**
+   * Tiny bar
+   */
   tiny = false;
 
   /**
-   * Default values
+   * The video inserted by the user
+   */
+  video;
+
+  /**
+   * Default params
    */
   static defaults = {
     editorID: '',
@@ -118,7 +152,7 @@ class Jbbed {
       previewSentence: 'The quick brown fox jumps over the lazy dog',
       previewBgColor: 'theme', // or hex color
       previewTextColor: 'theme', // or hex color
-      palette: true
+      palette: false
     },
     single: ['hr', 'img', 'smileys', 'vid', 'xpost', 'jsf'],
     select: {
@@ -133,10 +167,9 @@ class Jbbed {
     keepBars: true,
     selectiveRemove: ['script', 'iframe'],
     video: {
-      youtube: [560, 315],
-      rumble:  [640, 360],
+      youtube: [560, 315, 0], // width, height, noocookie (1: yes, 0: no)
+      rumble:  [640, 360], // width, height
     },
-    embedCode: 'none', // or gist, or jsfiddle or codepen
     sizeUnit: "px",
     tagTranslate: {
       size: ['span', 'style="font-size:$1;"', "[a-zA-Z0-9]+"],
@@ -210,9 +243,9 @@ class Jbbed {
       preview:      ['label:Preview', 'title:Preview', 'className:jbbicon-preview jbbicon'],
       ok:           ['label:OK', 'title:Ok', 'className:jbbicon-check jbbicon'],
       no:           ['label:NO', 'title:No', 'className:jbbicon-close jbbicon'],
-      smileys:        ['label:Smileys', 'title:Smileys', 'className:jbbicon-emoticon jbbicon'],
+      smileys:      ['label:Smileys', 'title:Smileys', 'className:jbbicon-emoticon jbbicon'],
       spoiler:      ['label:Spoiler', 'title:Spoiler', 'className:jbbicon-spoiler jbbicon'],
-      jsf:         ['label:JsFiddle', 'title:JsFiddle', 'className:jbbicon-jsf jbbicon'],
+      jsf:          ['label:JsFiddle', 'title:JsFiddle', 'className:jbbicon-jsf jbbicon'],
       fullscreen:   ['label:Fullscreen', 'title:Fullscreen', 'className:jbbicon-fullscreen jbbicon']
 
     },
@@ -221,12 +254,14 @@ class Jbbed {
       vid:    'Insert a video ($1):',
       img:    'Insert an image url:',
       jsf:    'Insert link of your fiddle',
-      xpost:  'Insert link of your X post',
       clear:  'Attention! You are about to delete your work! Are you sure?'
     }
   };
 
-  static tinyBar = ['b', 'i', 'u', 'link', 'img', 'ul', 'ol', 'li', 'quote', 'hr', 'spoiler'];
+  /**
+   * The tiny bar 
+   */
+  static tinyBar = ['b', 'i', 'link', 'img', 'ul', 'ol', 'li', 'quote', 'hr', 'spoiler'];
 
   /**
    * The constructor
@@ -237,7 +272,7 @@ class Jbbed {
   constructor(editor, params) {
 
     // initialize editor and params
-    this.editor = editor;
+    this.editor = editor; // jquery object
     this.params = params;
 
     // parse values
@@ -777,10 +812,11 @@ class Jbbed {
           }
         ),
         del = Jbbed.createElement(
-          'span',
+          'button',
           {
             id: 'del-' + ID,
-            cls: 'jbbed-del ' + jbbedD
+            cls: 'jbbed-del ' + jbbedD,
+            type: 'button'
           }
         ),
         wrap = Jbbed.createElement(
@@ -843,19 +879,16 @@ class Jbbed {
 
   /**
    * Add buttons
-   * 
-   * @param object $ // jQuery object
+   *
    */
-  buttons( $ ) {
+  buttons() {
     const 
     ID              = this.ID,
     instance        = this,
     bars            = this.params.bars,
     inselect        = Object.getOwnPropertyNames(this.params.select),
     select          = this.params.select,
-    localizeButtons = this.params.localizeButtons,
     allowed         = this.allowed,
-    theme           = this.params.theme,
     buttonsIcon     = this.params.buttonsIcon,
     smileys           = this.params.smileys,
     modal           = this.params.modal,
@@ -977,10 +1010,8 @@ class Jbbed {
 
   /**
    * Fullscreen frame
-   * 
-   * @param object $ // jQuery object
    */
-  fullscreen( $ ) {
+  fullscreen() {
     const 
     ID                  = this.ID,
     fullscreenContainer = this.frame.fullscreen,
@@ -1020,10 +1051,9 @@ class Jbbed {
       const containerId = '#' + mainContainer.id,
             buttonsH    = buttonsContainer.offsetHeight,
             tabH        = tabContainer.offsetHeight,
-            previewH    = previewContainer.offsetHeight,
-            textareaH   = editor.offsetHeight,
             fullscreenH = fullscreenContainer.offsetHeight,
-            h           = buttonsH+tabH+fullscreenH;
+            h           = buttonsH+tabH+fullscreenH,
+            resize      = window.innerHeight-(h+(h/3));
       if( $(containerId).hasClass('jbbed-fullscreen') ) {
         $(containerId).removeClass('jbbed-fullscreen');
         $(this).removeClass('fullscreen-active');
@@ -1031,8 +1061,8 @@ class Jbbed {
         $('#' + editor.id).css('height', textareaArgsH );
       } else {
         $(containerId).addClass('jbbed-fullscreen');
-        $('#' + previewContainer.id).css('height', ( +h+previewH ) + 'px' );
-        $('#' + editor.id).css('height', (+h+textareaH) + 'px' );
+        $('#' + previewContainer.id).css('height', resize + 'px' );
+        $('#' + editor.id).css('height', resize + 'px' );
         $(this).addClass('fullscreen-active');
       }
     });
@@ -1134,10 +1164,12 @@ class Jbbed {
 
     // put string with bbtags in the textarea
     myeditor.val(string);
+    
 
     //... then, position caret at the end of the last filled BB tag
     myeditor[0].selectionEnd = +end + taglen.length;
     myeditor[0].focus({ preventScroll: true });
+   
 
   }
 
@@ -1146,7 +1178,7 @@ class Jbbed {
    * 
    * @param object $ // jQuery object
    */
-  textarea( $ ) {
+  textarea() {
     const 
     instance        = this,
     ID              = this.ID,
@@ -1367,15 +1399,15 @@ class Jbbed {
     // fill video in newstring
     const matches = newstring.matchAll(/\[vid=([^<>\]\[\s]+)\]/g);
     for (const v of matches) {
-      const iframe = Jbbed.buildVid(v[1], videoParams);
-      newstring = newstring.replace(v[0], iframe);
+      this.buildVid(v[1]);
+      newstring = newstring.replace(v[0], this.video);
     }
 
     // create jsf container and fill in newstring
     const jsf = newstring.matchAll(/\[jsf=([^<>\]\[\s]+)\]/g);
     for (const v of jsf) {
       const r = Math.random(),
-            id = Jbbed.randomString(r, 5),
+            id = Jbbed.randomId(r, 5),
             pattern_jsf  = /(\/\/)?(www\.)?jsfiddle\.net/g,
             test_jsf     = pattern_jsf.test(v[1]);
       if( test_jsf === true ) {
@@ -1454,14 +1486,11 @@ class Jbbed {
 
   /**
    * Add tabs to switch editor -> preview
-   * 
-   * @param object $ // jQuery object
    */
-  preview( $ ) {
+  preview() {
     const 
     ID              = this.ID,
     instance        = this,
-    localizeButtons = this.params.localizeButtons,
     editor          = this.editor,
     previewContainer= this.frame.preview,
     buttonsIcon     = this.params.buttonsIcon,
@@ -1545,73 +1574,81 @@ class Jbbed {
       }
     });
   }
+
     /**
    * Get video. Supported Youtube and Rumble
    * @param {string} url
    * @param {object} params
    */
-    static buildVid(url, params = {}) {
-      if (
-        url.trim().length === 0 ||
-        typeof url === "undefined" ||
-        url === "null"
-      ) {
+  buildVid(url) {
+
+    const paramsYt = this.params.video.youtube,
+          paramsRu = this.params.video.rumble
+
+    console.log(this.params.youtube)
+
+    if (
+      url.trim().length === 0 ||
+      typeof url === "undefined" ||
+      url === "null"
+    ) {
+      return;
+    }
+
+    let iframe = "";
+    const parse_url   = new URL(url),
+          pattern_yt  = /(www\.)?youtu(\.)?be(\.com)?/g,
+          test_yt     = pattern_yt.test(url),
+          pattern_rum = /(www\.)?rumble\.com/g,
+          test_rum    = pattern_rum.test(url);
+
+    // yt
+    if (test_yt === true) {
+      
+      let code = parse_url.searchParams.get("v");
+      if (code == null) {
+        code = parse_url.pathname.slice(1);
+      }
+      if (code === "null" || typeof code === "undefined") {
         return;
       }
-  
-      let iframe = "";
-      const parse_url   = new URL(url),
-            pattern_yt  = /(www\.)?youtu(\.)?be(\.com)?/g,
-            test_yt     = pattern_yt.test(url),
-            pattern_rum = /(www\.)?rumble\.com/g,
-            test_rum    = pattern_rum.test(url);
-  
-      // yt
-      if (test_yt === true) {
-        
-        let code = parse_url.searchParams.get("v");
-        if (code == null) {
-          code = parse_url.pathname.slice(1);
-        }
-        if (code === "null" || typeof code === "undefined") {
-          return;
-        }
-        if (code.search("embed") > -1) {
-          code = code.substring(6);
-        }
-  
-        const attrs = Jbbed.explodeString( params.youtube, '|' ),
-              width = attrs[0],
-              height = attrs[1],
-              src = "https://www.youtube-nocookie.com/embed/" + code + "?controls=1";
-  
-        iframe =
-          '<iframe width="' +
-          width +
-          '" height="' +
-          height +
-          '" src="' +
-          src +
-          '" title="Youtube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
-      
-      } else if (test_rum === true) {
-        
-        let code = parse_url.pathname.slice(7, -1);
-  
-        if (code === "null" || typeof code === "undefined") {
-          return;
-        }
-  
-        const attrs =  Jbbed.explodeString( params.rumble, '|' ),
-              width = attrs[0],
-              height = attrs[1],
-              src = "https://rumble.com/embed/" + code + "/?pub=4";
-  
-        iframe =
-          '<iframe class="rumble" width="' + width + '" height="' + height + '" src="' + src + '" frameborder="0" allowfullscreen></iframe>';
+      if (code.search("embed") > -1) {
+        code = code.substring(6);
       }
-  
-    return iframe;
+
+      const attrs = Jbbed.explodeString( paramsYt, '|' ),
+            width    = attrs[0],
+            height   = attrs[1],
+            nocookie = parseInt( attrs[2] ) === 0 ? '' : '-nocookie',
+            src = "https://www.youtube" + nocookie + ".com/embed/" + code + "?controls=1";
+
+      iframe =
+        '<iframe width="' +
+        width +
+        '" height="' +
+        height +
+        '" src="' +
+        src +
+        '" title="Youtube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+    
+    } else if (test_rum === true) {
+      
+      let code = parse_url.pathname.slice(7, -1);
+
+      if (code === "null" || typeof code === "undefined") {
+        return;
+      }
+
+      const attrs =  Jbbed.explodeString( paramsRu, '|' ),
+            width = attrs[0],
+            height = attrs[1],
+            src = "https://rumble.com/embed/" + code + "/?pub=4";
+
+      iframe =
+        '<iframe class="rumble" width="' + width + '" height="' + height + '" src="' + src + '" frameborder="0" allowfullscreen></iframe>';
+    }
+
+    this.video = iframe;
   }
 
   /**
@@ -1677,7 +1714,7 @@ class Jbbed {
         if( data[d].indexOf(':') < 1 ) {
           continue;
         }
-      	const arg = Jbbed.cutString( data[d], ':', 1 )
+      	const arg = Jbbed.cutString( data[d], ':', 1 );
       	el.setAttribute( arg[0], arg[1] );
       }
     } else {
@@ -1787,25 +1824,37 @@ class Jbbed {
   }
 
   /**
-   * is not a uniqe id generator
-   * 
-   * based on script of codemizy.com
-   * source: https://www.codemzy.com/blog/random-unique-id-javascript
+   * is not a uniqe id generator. Is a random id generator
    * 
    * @param {string} string
    * @param {int}    length
+   * @param {int}    deep
    * @returns
    */
-  static randomString(string, length) {
-    const t = string.toString(36).substring(2, length + 2),
-          d = Date.now()
-              .toString(36)
-              .substring(2, length + 2),
-          m = Math.random()
-      .toString(36)
-      .substring(2, length + 2);
-    string = m + t + d;
-    return string.replace(/\./g, '');
+  static randomId(number, length, deep = 0) {
+    const t = (number*Math.random()).toString(36),
+          d = (Date.now()*Math.random()).toString(36),
+          m = Math.random().toString(36);
+    let string = m + t + d;
+    if( parseInt( deep ) === 0 ) {
+    	return string
+      	.substring(1, length+2 )
+        .replace(/\./g, '');
+    } else {
+    	let a = []
+      let k = string.charCodeAt(0)*s*Math.random();
+    	for( let i = 0; i < parseInt( deep ); i++ ) {
+      	a[i] = randomId(k, length, 0);
+      }
+      let index = Math.floor(Math.random()*a.length)
+      string = a[index];
+      string = string
+      				.substring(1, length+2 )
+        			.replace(/\./g, '');
+              
+      return string;
+    }
+    
   }
 
   /**
@@ -1921,14 +1970,23 @@ class Jbbed {
    * @param {string} string 
    * @param {string} sep 
    * @param {number} limit 
+   * @param {boolean} surgicalCut
    * @returns array or string
    */
-  static cutString(string, sep, limit) {
-  
-    const p = string.split(sep, limit);
-    const s = p.join(sep);
-    const l = string.substring(s.length+sep.length);
-    return l.length > 0 ? [s, l] : p;
+  static cutString(string, sep, limit, surgicalCut = false) { 
+    const p = string.split(sep, limit),
+          s = p.join(sep),
+          l = string.substring(s.length+sep.length);
+   
+   if( l.length === 0 ) {
+      return p;
+    }
+    
+    if( surgicalCut === true ) {
+      return [s, l];
+    }
+    
+    return p.concat(l);
   }
   
   /**
@@ -1955,7 +2013,7 @@ class Jbbed {
    * @param {number} end 
    * @returns array
    */
-  static arrayRange(start, end) {
+  static arrayRange(s, e) {
     const d = (e-s)+1, r = [];
     Array(d).fill(0).forEach(function(n,v) {
       r[v] = s+v;
