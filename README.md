@@ -19,9 +19,3 @@ echo jbbed_convert( $string );
 ```
 
 ### Versions
-
-#### 23/04/2024
-* v1.1 - Edit readme.md
-
-#### 20/04/2024
-* v1.0 - Initial release
