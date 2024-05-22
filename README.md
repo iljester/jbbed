@@ -4,18 +4,30 @@ BBCode Editor
 ### Description
 A simple BB editor in JQuery fully customizable.
 
-### Output Styles
-This editor does not have any styling for the output. It will be up to the user to apply the formatting that best suits his style needs.
+### Require
+This plugin requires JQuery
 
 ### Basic Usage
 
 ```js
-$('.mytextarea').jbbed();
+$('#mytextarea').jbbed();
 ```
-#### Basic output in php
+Or if you want multiple instances in a single page, the advice is to use jbbedMu:
+
+```js
+$('.mytextarea').jbbedMu();
+```
+
+### Basic output in php
 
 ```php
 echo jbbed_convert( $string );
 ```
+### Params
 
-### Versions
+For params, please see wiki.
+
+### Versions:
+
+## 1.0b
+Development version

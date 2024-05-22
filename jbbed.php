@@ -2,8 +2,11 @@
 /**
  * jbbed php processor
  * Convert bbcode in html tags
- * @package jbbed plugin
- * @version 1.0b
+ * @author iljester <thejester72@gmail.com>
+ * @web https://github.com/iljester, www.iljester.com
+ * @package jbbed editor plugin
+ * (c) 2024
+ * @version 1.0beta
  */
 
  class jbbedDecode {
@@ -174,7 +177,13 @@
 		$n_string = str_replace( $match[0], $n_match, $string );
 
 		// encode all content into code tags
-		$n_string = self::encodeContentCode($n_string);
+		preg_match_all('/\[code\](.*?)\[\/code\]/ms', $n_string, $matches );
+		$content_code = $matches[1];
+		$encode = [];
+		foreach( $content_code as $content ) {
+			$encode[] = base64_encode( $content );
+		}
+		$n_string = str_replace( $content_code, $encode, $n_string );
 
 		// encode all special chars
 		$n_string = htmlspecialchars($n_string, ENT_QUOTES, 'UTF-8');
@@ -316,6 +325,66 @@
 		return $html;
 		
 	}
+
+
+	/**
+	 * Add p
+	 * @param string $string
+	 */
+	protected function _autop( $string ) {
+
+	    // remove previous p
+	    $newstring = preg_replace('/<\/?p>/m', '', $string);
+	
+	    // list of html block elements
+	    $arr = $this->args['noWrapP'];
+	
+		$string_arr = is_array( $arr ) ? implode('|', $arr) : $arr;
+		
+		$regex = '/(<p>)?(<(' . $string_arr . ')([^>]+)?>(.*?)(<\/(' . $string_arr . ')>)?)<\/p>/ms';
+
+		$newstring = preg_replace('/\n|\r|\r\n/m', '</p><p>', $newstring);
+		$newstring = preg_replace('/<p><\/p>/ms', '', $newstring );
+		$newstring = preg_replace($regex, '$2', $newstring);
+		$newstring = str_replace('<p></p>', '', $newstring);
+		$newstring = preg_replace('/<\/p><p>$/ms', '', $newstring); 
+
+		// add p if content has p
+		preg_match_all('/<(blockquote[^>]*|div style[^>]* class="jbbed-spoiler")>(.*?)<\/(blockquote|div)>/', $newstring, $match );
+		foreach( $match[2] as $m ) {
+			if( stripos( $m, '<p>' ) !== false ) {
+				$nm = '<p>' . $m;
+				$newstring = str_replace( $m, $nm, $newstring );
+			}
+		}
+
+		/**
+		 * Unlike the JS processor, this parse closes on the first available tag. 
+		 * So in the case of "<strong>Hello <strong>World</strong>, Hi!</strong>", 
+		 * this will become: "<strong>Hello World</strong>, Hi!"
+		 */
+		$noTagIntoTag = $this->args['noTagIntoTag'];
+		$string_arr = is_array( $noTagIntoTag ) ? implode('|', $noTagIntoTag) : $noTagIntoTag;
+		preg_match_all('/<((' . $string_arr . ')([^>]*))>(.*?)<\/(' . $string_arr . ')>/', $newstring, $match );
+		foreach( $match[0] as $key => $m ) {
+			$open = '<' . $match[1][$key] . '>';
+			$close = '</' . $match[2][$key] . '>';
+			$nm = $open . strip_tags( $m ) . $close;
+			$newstring = str_replace( $m, $nm, $newstring );
+		}
+	
+		// decode all content into code tags
+		preg_match_all('/<pre[^>]*>(.*?)<\/pre>/ms', $newstring, $matches );
+		$content_code = $matches[1];
+		$decode = [];
+		foreach( $content_code as $content ) {
+			$content = preg_replace('/(\n)(.*?)(\n)/', '<li><code>$2</code><li>', base64_decode( $content ) );
+			$decode[] = '<ol><li><code>' . $content . '</code></li></ol>';
+		}
+		$newstring = str_replace( $content_code, $decode, $newstring );
+	
+	    return '<p>' . $newstring . '</p>';
+    }
 	
     /**
      * Convert bbtags to html
@@ -413,92 +482,10 @@
 		}
 		
 		// apply autop
-		$string = $this->autop($string);
+		$string = $this->_autop($string);
 		
 		return $string;
 		
-	}
-	
-	public function autop( $string ) {
-
-	    // remove previous p
-	    $newstring = preg_replace('/<\/?p>/m', '', $string);
-	
-	    // list of html block elements
-	    $arr = $this->args['noWrapP'];
-	
-		$string_arr = is_array( $arr ) ? implode('|', $arr) : $arr;
-		
-		$regex = '/(<p>)?(<(' . $string_arr . ')([^>]+)?>(.*?)(<\/(' . $string_arr . ')>)?)<\/p>/ms';
-
-		$newstring = preg_replace('/\n|\r|\r\n/m', '</p><p>', $newstring);
-		$newstring = preg_replace('/<p><\/p>/ms', '', $newstring );
-		$newstring = preg_replace($regex, '$2', $newstring);
-		$newstring = str_replace('<p></p>', '', $newstring);
-		$newstring = preg_replace('/<\/p><p>$/ms', '', $newstring); 
-
-		// p if content has p
-		preg_match_all('/<(blockquote|div style[^>]* class="jbbed-spoiler")>(.*?)<\/(blockquote|div)>/', $newstring, $match );
-		foreach( $match[2] as $m ) {
-			if( stripos( $m, '<p>' ) !== false ) {
-				$nm = '<p>' . $m;
-				$newstring = str_replace( $m, $nm, $newstring );
-			}
-		}
-
-		/**
-		 * Unlike the JS processor, this parse closes on the first available tag. 
-		 * So in the case of "<strong>Hello <strong>World</strong>, Hi!</strong>", 
-		 * this will become: "<strong>Hello World</strong>, Hi!"
-		 */
-		$noTagIntoTag = $this->args['noTagIntoTag'];
-		$string_arr = is_array( $noTagIntoTag ) ? implode('|', $noTagIntoTag) : $noTagIntoTag;
-		preg_match_all('/<((' . $string_arr . ')([^>]*))>(.*?)<\/(' . $string_arr . ')>/', $newstring, $match );
-		foreach( $match[0] as $key => $m ) {
-			$open = '<' . $match[1][$key] . '>';
-			$close = '</' . $match[2][$key] . '>';
-			$nm = $open . strip_tags( $m ) . $close;
-			$newstring = str_replace( $m, $nm, $newstring );
-		}
-	
-		// decode code into pre
-		$newstring = self::decodeContentCode( $newstring );
-	
-	    return '<p>' . $newstring . '</p>';
-    }
-
-
-	/**
-	 * Encode content code
-	 * @param string $string
-	 * return string
-	 */
-	static function encodeContentCode( $string ) {
-		// encode all content into code tags
-		preg_match_all('/\[code\](.*?)\[\/code\]/ms', $string, $matches );
-		$content_code = $matches[1];
-		$encode = [];
-		foreach( $content_code as $content ) {
-			$encode[] = base64_encode( $content );
-		}
-		return str_replace( $content_code, $encode, $string );
-	}
-
-	/**
-	 * Decode content code
-	 * @param string $string
-	 * return string
-	 */
-	static function decodeContentCode( $string ) {
-		// decode all content into code tags
-		preg_match_all('/<pre>(.*?)<\/pre>/ms', $string, $matches );
-		$content_code = $matches[1];
-		$decode = [];
-		foreach( $content_code as $content ) {
-			$content = preg_replace('/(\n)(.*?)(\n)/', '<li><code>$2</code><li>', base64_decode( $content ) );
-			$decode[] = '<ol><li><code>' . $content . '</code></li></ol>';
-		}
-		return str_replace( $content_code, $decode, $string );
 	}
 
     /**

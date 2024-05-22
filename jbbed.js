@@ -1,6 +1,8 @@
 /**
  * jbbed
- * @author Davide Mura (thejester72@gmail.com)
+ * @author iljester <thejester72@gmail.com>
+ * @web https://github.com/iljester, www.iljester.com
+ * @package jbbed editor plugin
  * (c) 2024
  * @version 1.0beta
  * 
@@ -28,7 +30,7 @@
       ( typeof params.editorID === 'undefined' ||
       params.editorID.length === 0 )
     ) {
-      params.editorID = $(this).selector.substring(1);
+      params.editorID = btoa( $(this).selector ).replace(/[^\w]+/, '').toLowerCase();
     }
 
     // ... else assign id to textarea if not have once

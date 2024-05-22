@@ -161,7 +161,7 @@ jQuery(function($) {
         }
     });
 
-    $('#t').jbbed({
+    $('textarea').jbbed({
         theme: 'classic'
     });
 });
