@@ -5,10 +5,6 @@
  * @package jbbed editor plugin
  * (c) 2024
  * @version 1.0beta
- * 
- * buttons available not by default: 
- *    xpost, alignleft, alignright, aligncenter, alignjustify
- * 
  */
 
 (function ( $ ) {
