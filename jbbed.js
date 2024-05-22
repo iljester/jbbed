@@ -144,9 +144,9 @@ class Jbbed {
     editorID: '',
     bars: {
       1: ['b', 'i', 'u', 's', '#', 'link', 'img', 'vid', '#', 'ol', 'ul', 'li', '#', 'quote', 'code'],
-      2: ['size', 'font', 'color', 'head', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'hr', 'spoiler', '#', 'smileys', 'jsf', '#', 'clear'],
+      2: ['size', 'font', 'color', 'h', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'hr', 'spoiler', '#', 'smileys', 'jsf', '#', 'clear'],
     },
-    modal: ['xpost', 'size', 'color', 'font', 'head', 'jsf'],
+    modal: ['size', 'color', 'font', 'h', 'jsf'],
     modalArgs: {
       preview: true,
       previewSentence: 'The quick brown fox jumps over the lazy dog',
@@ -154,15 +154,15 @@ class Jbbed {
       previewTextColor: 'theme', // or hex color
       palette: false
     },
-    single: ['hr', 'img', 'smileys', 'vid', 'xpost', 'jsf'],
+    single: ['hr', 'img', 'smileys', 'vid', 'jsf'],
     select: {
-      size:  ['--', 10,12,14,16,18,20,22,24,26,28,30],
-      font:  ['--', 'Arial', 'Times New Roman', 'Lucida Sans', 'Roboto', 'Monospace', 'Courier', 'Helvetica', 'Georgia'],
+      size:  [10,12,14,16,18,20,22,24,26,28,30],
+      font:  ['Arial', 'Times New Roman', 'Lucida Sans', 'Roboto', 'Monospace', 'Courier', 'Helvetica', 'Georgia'],
       color: ['Black:#000000', 'Grey:#808080', 'Lightgrey:#d3d3d3', 'Blue:#0000ff', 
               'Lightblue:#add8e6', 'Green:#008000', 'Lightgreen:#90ee90', 'Purple:#800080', 
               'Violet:#ee82ee', 'Pink:#ffc0cb','Brown:#a52a2a','Saddlebrown:#8b4513',
               'Red:#ff0000','Orange:#ffa500','Yellow:#ffff00','White:#ffffff'],
-      head:  ['--', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+      h:     ['H1:1', 'H2:2', 'H3:3', 'H4:4', 'H5:5', 'H6:6']
     },
     keepBars: true,
     selectiveRemove: ['script', 'iframe'],
@@ -178,13 +178,13 @@ class Jbbed {
       link: ['a', 'href="$1"', "[^<>\\]\\[\\s]+"],
       img:  ['img', 'src="$1"', "[^<>\\s]+"],
       b:    ['strong', '', ''],
+      i:    ['em', '', ''],
       quote: ['blockquote', '', ''],
       code: ['pre', '', ''],
-      aligncenter: ['span', 'style="text-align:center;display:block;"', ''],
-      alignleft: ['span', 'style="text-align:left;display:block;"', ''],
-      alignright: ['span', 'style="text-align:right;display:block;"', ''],
-      alignjustify: ['span', 'style="text-align:justify;display:block;"', ''],
-      head: ['', '$1', '[1-6]+'],
+      aligncenter: ['p', 'style="text-align:center;"', ''],
+      alignleft: ['p', 'style="text-align:left;"', ''],
+      alignright: ['p', 'style="text-align:right;"', ''],
+      alignjustify: ['p', 'style="text-align:justify;"', ''],
       spoiler: ['div', 'style="display:none"', '']
     },
     textareaArgs: {
@@ -199,7 +199,9 @@ class Jbbed {
       font: "sans-serif",
       width: "100%",
       height: "500px",
-      autop: true,
+      contentWrapP: ['blockquote', 'div'],
+      noWrapP: ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'div'],
+      noTagIntoTag: ['strong', 'u', 'i', 'spoiler', 'link']
     },
     spoilerArgs: {
       className: '',
@@ -237,7 +239,7 @@ class Jbbed {
       alignjustify: ['label:AlignJustify', 'title:Align Justify', 'className:jbbicon-alignjustify jbbicon'],
       size:         ['label:Size', 'title:Size', 'className:jbbicon-size jbbicon'],
       font:         ['label:Font', 'title:Font', 'className:jbbicon-font1 jbbicon'],
-      head:         ['label:Head', 'title:Head', 'className:jbbicon-head jbbicon'],
+      h:            ['label:Head', 'title:Head', 'className:jbbicon-head jbbicon'],
       color:        ['label:Color', 'title:Color', 'className:jbbicon-palette3 jbbicon'],
       edit:         ['label:Edit', 'title:Edit', 'className:jbbicon-edit jbbicon'],
       preview:      ['label:Preview', 'title:Preview', 'className:jbbicon-preview jbbicon'],
@@ -413,10 +415,16 @@ class Jbbed {
     // deep merge tagTranslate
     params.tagTranslate = Jbbed.keepMerge( params.tagTranslate, defaults.tagTranslate);
 
-    // add class to spoiler box if class is empty
-    params.spoilerArgs.className = params.spoilerArgs.className.length === 0 ? 
-          params.editorID + '-spoiler' :  params.spoilerArgs.className;
-    params.tagTranslate.spoiler[1] = params.tagTranslate.spoiler[1] + ' class="' + params.spoilerArgs.className + '"';
+    // parse some values of previewArgs
+    params.previewArgs.noTagIntoTag = Jbbed.explodeString(params.previewArgs.noTagIntoTag, '|');
+    params.previewArgs.contentWrapP = Jbbed.explodeString(params.previewArgs.contentWrapP, '|');
+    params.previewArgs.noWrapP = Jbbed.explodeString(params.previewArgs.noWrapP, '|');
+
+    // add class to spoiler arg if not exists
+    if( params.spoilerArgs.className.length === 0 ) {
+      params.tagTranslate.spoiler[1] = params.tagTranslate.spoiler[1] + ' class="' + params.editorID + '-spoiler' + '"';
+      params.spoilerArgs.className = params.editorID + '-spoiler';
+    }
 
     this.params = params;
   }
@@ -484,12 +492,11 @@ class Jbbed {
     select           = this.params.select,
     inselect         = Object.getOwnPropertyNames(this.params.select),
     modalArgs        = this.params.modalArgs,
-    theme            = this.params.theme,
     localizeButtons  = this.params.localizeButtons,
     localizeMessages = this.params.localizeMessages,
     buttonsIcon      = this.params.buttonsIcon,
     sizeUnit         = this.params.sizeUnit,
-    smileys            = this.params.smileys,
+    smileys          = this.params.smileys,
     video            = this.params.video,
     jbbedD           = ID + '-d';
 
@@ -540,9 +547,6 @@ class Jbbed {
       cssPreview.push('backgroundColor:' + modalArgs.previewBgColor);
     if( modalArgs.previewTextColor !== 'theme' ) 
       cssPreview.push('color:' + modalArgs.previewTextColor);
-
-    // create dialog container
-    let add = theme !== 'classic' ? 15 : 17;
 
     const 
     dialogContainer = Jbbed.createElement(
@@ -725,7 +729,7 @@ class Jbbed {
               switch(dataButton) { 
                 case 'size' : $('#' + previewContainer.id).css('font-size', value); break;
                 case 'font' : $('#' + previewContainer.id).css('font-family', value); break;
-                case 'head' : 
+                case 'h' : 
                   let text = $('#' + previewContainer.id).text();
                   if( value.length === 0 || value === '--' ) {
                     $('#' + previewContainer.id).text(text);
@@ -1079,7 +1083,6 @@ class Jbbed {
     inselect        = Object.getOwnPropertyNames(this.params.select),
     single          = this.params.single,
     sizeUnit        = this.params.sizeUnit,
-    showPreview     = this.params.showPreview,
     tagTranslate    = this.params.tagTranslate,
     localizeMsg     = this.params.localizeMessages,
     allowed         = this.allowed;
@@ -1123,26 +1126,25 @@ class Jbbed {
     } else {
       // test if link is an email
       attr = Jbbed.testEmail(attr) === true && tag === 'link' ? 'mailto:' + attr : attr;
-      attr = modals.includes(tag) && tag !== 'smileys' ? "=" + attr : attr;
+      attr = modals.includes(tag) && tag !== 'smileys' && tag !== 'h' ? "=" + attr : attr;
       smileysCode = modals.includes(tag) && tag === 'smileys' ? attr: smileysCode;
     }
 
     // create tag bb for select buttons
-    // We don't use tagAttrs because it is also used to convert alias tags to html tags
-    let hasAttr = Object.getOwnPropertyNames(tagTranslate);
-
+    // let hasAttr = Object.getOwnPropertyNames(tagTranslate);
     if (inselect.includes(tag) && ! modals.includes(tag)) {
       let value = thisButton.val().trim();
-      if ( hasAttr.includes(tag) ) {
-        attr = value.length > 0 ? "=" + value + (tag === "size" ? sizeUnit : "") : false;
+      //if ( hasAttr.includes(tag) ) {
+        attr = value.length > 0 ? ( tag !== 'h' ? "=" : '' ) + value + (tag === "size" ? sizeUnit : "") : false;
         if( attr === false ) {
           return false;
         }
-      } 
+      //} 
     }
 
     // create tag BB
-    let wrap = "[" + tag + attr + "]" + sel + "[/" + tag + "]",
+    const attrInCl = tag === 'h' ? attr : ''; // using for head
+    let wrap = "[" + tag + attr + "]" + sel + "[/" + tag + attrInCl + "]",
         taglen = "[" + tag + attr + "][/" + tag + "]",
         singles = Jbbed.explodeString( single, '|');
     
@@ -1235,8 +1237,12 @@ class Jbbed {
       'button',
       {
         textContent: buttonShow,
-        cls: 'button-spoiler-' + ID + ' jbbed-button-spoiler'
+        cls: 'button-spoiler-' + ID + ' jbbed-button-spoiler',
+        type: 'button'
       }
+    );
+    const p = Jbbed.createElement(
+      'p'
     );
 
     $('.' + target).wrap(spoilerContainer);
@@ -1297,13 +1303,15 @@ class Jbbed {
    * Do Html for preview
    */
   doHtml() {
+
     const
     preview       = this.frame.preview,
-    autop         = this.params.previewArgs.autop,
     allowed       = this.allowed.join('|'),
     tagTranslate  = this.params.tagTranslate,
-    videoParams   = this.params.video,
-    string        = this.editor.val();
+    string        = this.editor.val(),
+    contentWrapP  = this.params.previewArgs.contentWrapP,
+    noWrapP       = this.params.previewArgs.noWrapP,
+    noTagIntoTag  = this.params.previewArgs.noTagIntoTag;
 
     let newstring = string;
 
@@ -1314,21 +1322,10 @@ class Jbbed {
       newstring = newstring.replace(m[0], value);
     }
 
-    // then... convert special chars and newline
+    // then... convert special chars
     newstring = newstring         
       .replace(/</g, "&lt;") // convert < special char
       .replace(/>/g, "&gt;") // convert > special char            
-      .replace(/\n|\r|\r\n/gm, '<br>');  // convert newline in br    
-
-    // remove br from lists
-    const lst = newstring.match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/gs);
-    for(const m in lst ) {
-      let mat = lst[m].match(/\[(ul|ol)\](.*?)\[\/(ul|ol)\]/s);
-      const regex = new RegExp('(>|\\])(\\s+)', 'gms');
-      const prev = mat[2];
-      const replaced = prev.replace(regex, '$1').replace(/\s*<br>{1,}\s*/g, '');
-      newstring = newstring.replace(prev, replaced);
-    }
 
     // now, check if tag is allowed
     if (allowed.toString().trim().length > 0) {
@@ -1346,6 +1343,14 @@ class Jbbed {
 
     // translate bbcode with attributes or bbcode alias
     for( let [bbTag, value] of Object.entries( tagTranslate ) ) {
+
+      // This is because in some cases it could be necessary 
+      // to insert the BBTag in the TagTranslate tag list, 
+      // but without the need to parse its values 
+      if( value === false ) {
+        continue;
+      }
+
       value = Jbbed.explodeString(value, '|', 3);
       const htmlTag   = value[0].trim();
       const attrs     = value[1].trim();
@@ -1381,12 +1386,7 @@ class Jbbed {
         let tag   = htmlTag;
         let attr  = attrs.replace("$1", value);
         let space = ' ';
-        // case in which the htmltag is also an attribute of the BBCode
-        if( ( tag === '' || tag === '*' ) && attrs === '$1'  ) {
-          tag = attr;
-          attr = '';
-          space = '';
-        }
+   
         let open = tag + space + attr;
         let close = tag;
 
@@ -1394,6 +1394,7 @@ class Jbbed {
           .replace("[" + to + "]", "<" + open + ">")
           .replace("[/" + bbTag + "]", "</" + close + ">");
       }
+
     }
 
     // fill video in newstring
@@ -1426,36 +1427,30 @@ class Jbbed {
     // convert tags without attrs
     newstring = newstring.replace(/\[(\/?[a-z0-9]+)(=(.*?))?\]/g, "<$1$2>");
 
-    // add autop
-    if( autop === true ) {
+    // remove previous p
+    newstring = newstring.replace(/<\/?p>/gm, '');
 
-      // remove previous p
-      newstring = newstring.replace(/<\/?p>/gm, '');
+    // list of html block elements
+    // It's not the best system, 
+    // but for now it's the one that works, 
+    // because the conversion process is done at the regex level.
+    /*
+    const arr = [
+      'ol','ul','pre','blockquote','hr','h1','h2','h3','h4','h5','h6',
+      'address','article','aside','canvas','dd','div','dl','dt','fieldset',
+      'figcaption','figure','footer','form','header','li','main',
+      'nav','noscript','section','table','video','tfoot','nav',
+      'table','details','dialog','hgroup','tbody','td','th','thead',
+      'noframes','menu', 'p'
+    ];*/
 
-      // list of html block elements
-      const arr = [
-        'ol','ul','pre','blockquote','hr','h1','h2','h3','h4','h5','h6',
-        'address','article','aside','canvas','dd','div','dl','dt','fieldset',
-        'figcaption','figure','footer','form','header','li','main',
-        'nav','noscript','section','table','video','tfoot','nav',
-        'table','details','dialog','hgroup','tbody','td','th','thead',
-        'noframes','menu'
-      ];
+    const regex = new RegExp('<p>(<(' + noWrapP.join('|') + ')([^>]+)?>(.*?)(<\\\/(' + noWrapP.join('|') + ')>)?)<\\\/p>', 'gms')
 
-      const regex  = new RegExp('<br>{1,}|<\\\/p><p>{1,}(<(' + arr.join('|') + ')>)', 'gms');
-      const regex2 = new RegExp('(<\\\/(' + arr.join('|') + ')>)<\\\/p>', 'gms');
-
-      newstring = newstring
-      .replace(/<br><br>/gms, '</p><p>')
-      .replace(regex, '</p>&$1') // lost a &?
-      .replace(regex2, '$1') // remove closed p after block elements
-      .replace(/(<(hr)>)<\/p>/gms, '$1') // only single tags
-      .replace(/<\/p>[^<]/gms, '<br>')
-      .replace(/<\/p>$/gms, '') // remove last closed p tag
-
-      newstring = '<p>' + newstring + '</p>';
-
-    }
+    newstring = newstring
+    .replace(/\n|\r|\r\n/gm, '</p><p>')
+    .replace(/<p><\/p>/gms, '')
+    .replace(regex, '$1')
+    newstring = '<p>' + newstring + '</p>';
 
    // last: decode content into pre 
    const nsa = newstring.matchAll(/<pre(\s+[^>]+)?>(.*?)<\/pre>/gms);
@@ -1475,6 +1470,33 @@ class Jbbed {
 
     // add html content to preview
     $('#' + preview.id).html(newstring);
+
+    // Some post-fill filters
+    for( const c of preview.children ) {
+      
+      const tag = c.tagName.toLowerCase();
+
+      // Remove empty paragraphs if they survive the filter regex
+      if( c.outerHTML === '<p></p>') {
+        c.outerHTML = '';
+      }
+
+      // remove tag into tag (i.e bold into bold)
+      for( let sc of c.children ) {
+        Jbbed.removeTagIntoTag( sc, noTagIntoTag );
+      }
+
+      // add paragraph if return in a new line
+      if( contentWrapP.includes(tag) && c.innerHTML.indexOf('<p>') > -1 ) {
+          c.innerHTML = '<p>' + c.innerHTML;
+      }
+ 
+      // Remove empty paragraphs if they survive the prev filters
+      if( noWrapP.includes(tag)) {
+        c.innerHTML = c.innerHTML.replace(/(<\/?p>|<br>)+/gms, '');
+      }
+      
+    }
 
     // initialize spoiler
     this.spoiler();
@@ -1583,9 +1605,7 @@ class Jbbed {
   buildVid(url) {
 
     const paramsYt = this.params.video.youtube,
-          paramsRu = this.params.video.rumble
-
-    console.log(this.params.youtube)
+          paramsRu = this.params.video.rumble;
 
     if (
       url.trim().length === 0 ||
@@ -1679,7 +1699,7 @@ class Jbbed {
     if( tag === 'select' && typeof attrs.value === 'object') {
       for( const v in attrs.value ) {
         const option = document.createElement('option');
-        option.value = attrs.value[v] === '--' ? '' : attrs.value[v];
+        option.value = attrs.value[v] === '--' ? '' : v;
         option.textContent = attrs.value[v];
         if ( attrs.value[v].toString().indexOf(':') > -1) {
           attrs.value[v] = attrs.value[v].split(":");
@@ -1801,9 +1821,6 @@ class Jbbed {
             break;
           case "height":
             element[0].style.height = prop[p];
-            break;
-          case 'autop':
-            element[0].className = prev + ' has-autop';
             break;
           case 'indent':
             element[0].style.className = prev + ' has-indent'
@@ -2043,6 +2060,34 @@ class Jbbed {
       n++;
     }
     return smileysA;
+  }
+
+  /**
+   * Remove tag into tag
+   * @param {object} el 
+   * @param {array} tags 
+   */
+  static removeTagIntoTag( el, tags = [] ) {
+    for( const e of el.children  ) {
+      let tag =  e.tagName.toLowerCase();
+      let regex = new RegExp( '<\\\/?' + tag + '>', 'gsm' );
+      if( tags.includes(tag) ) {
+        el.innerHTML = el.innerHTML.replace(regex, '');
+      }
+    }
+  }
+
+  static getDisplayEl( tag, type = 'block' ) {
+    const el = document.createElement(tag);
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    document.body.appendChild(el)
+    const r = window.getComputedStyle(el).getPropertyValue('display');
+    document.body.removeChild(el);
+    if( r === type ) {
+      return true;
+    }
+    return false;
   }
 
 } // end class

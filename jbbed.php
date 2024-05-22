@@ -12,7 +12,7 @@
      * Default args
      */
 	public $defaults = array(
-        'tags' => 'b|i|u|s|link|img|hr|ol|ul|li|quote|code|size|color|font|vid|xpost|emoji|gist|spoiler|head',
+        'tags' => 'b|i|u|s|link|img|hr|ol|ul|li|quote|code|size|color|font|vid|emoji|spoiler|h|jsf|alignleft|alignright|aligncenter',
         'tagTranslate'  => array(
 			'size' 			=> ['span', 'style="font-size:$1"', "[a-zA-Z0-9]+"],
 			'font' 			=> ['span', 'style="font-family:$1"', "[a-zA-Z0-9\\s]+"],
@@ -21,18 +21,25 @@
 			'img' 			=> ['img', 'src="$1"', "[^<>\\s]+"],
 			'quote' 		=> ['blockquote', '', ''],
 			'code' 			=> ['pre', '', ''],
+			'b'			    => ['strong', '', ''],
+			'i'				=> ['em', '', ''],
 			'aligncenter' 	=> ['p', 'style="text-align:center"', ''],
 			'alignleft' 	=> ['p', 'style="text-align:left"', ''],
 			'alignright' 	=> ['p', 'style="text-align:right"', ''],
 			'alignjustify' 	=> ['p', 'style="text-align:justify"', ''],
-			'head' 			=> ['', '$1', '[1-6]+'],
-			'spoiler' 		=> ['div', 'style="display:none"', '']
+			'spoiler' 		=> ['div', 'style="display:none" class="jbbed-spoiler"', '']
         ),
+		// for noWrapP, you can use string style, using | as separator (i.e., ul|ol|h1 etc.)
+      	'noWrapP' 		=> ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'div'],
+      	'noTagIntoTag' 	=> ['strong', 'u', 'i', 'em', 'spoiler', 'a'],
         'video' => array(
             'youtube' => "560|315",
             'rumble' => "640|360",
-        ),
-        'autop' => true
+		),
+		'jsfPlay' => array(
+			'output' => 'js', // html|css|js|result or all
+			'theme' => 'dark' // dark or ''
+		)
     );
     
     /**
@@ -121,12 +128,27 @@
 	        			$new_args[$param] = $values;
 	        		}
 	        	break;
-	        	case 'autop':
-	        		if( !isset( $args[$param] ) ) {
+				case 'noWrapP' : 
+					if(  isset( $args[$param]) && is_array( $args[$param])  ) {
+	        			$new_args[$param] = array_merge( $values, $args[$param]);
+	        		} else {
 	        			$new_args[$param] = $values;
 	        		}
-	        	break;
-	        	
+	        		break;
+				case 'noTagIntoTag' : 
+					if(  isset( $args[$param]) && is_array( $args[$param])  ) {
+						$new_args[$param] = array_merge( $values, $args[$param]);
+					} else {
+						$new_args[$param] = $values;
+					}
+					break;
+				case 'jsfPlay' :
+					if(  isset( $args[$param]) && is_array( $args[$param])  ) {
+	        			$new_args[$param] = array_merge( $values, $args[$param]);
+	        		} else {
+	        			$new_args[$param] = $values;
+	        		}
+				break;
 	        }
 	    }
 	    
@@ -141,28 +163,25 @@
 	protected function _clearString() {
 		$string = $this->string;
 		
+		// remove illegal chars into tag BB
 		preg_match_all( '/\[(.*?)\]/', $string, $match );
-		
 		$n_match = [];
 		$bb_tags = $match[0];
-	
 		foreach( $bb_tags as $m ) {
-			// remove illegal chars into tag BB
 			$m = preg_replace("/['\"<>\(\)\[\]\$!]/", '', $m);
 			$n_match[] = '[' . $m . ']';
 		}
-	
 		$n_string = str_replace( $match[0], $n_match, $string );
-		
+
+		// encode all content into code tags
+		$n_string = self::encodeContentCode($n_string);
+
 		// encode all special chars
 		$n_string = htmlspecialchars($n_string, ENT_QUOTES, 'UTF-8');
 		
 		// remove new lines into ul/ol
 		$re = '/((\[ol|ul|li\])\n\r|\r|\n|\s{1,})(\[\/?(ol|ul|li)])/m';
 		$n_string = preg_replace($re, '$3', $n_string);
-		
-		// convert lines in br
-		$n_string = preg_replace('/\n|\r|\r\n/m', '<br>', $n_string);
 
 		$this->string = $n_string;
 	}
@@ -188,25 +207,26 @@
 	}
 
 	/**
-	 * Add xpost 
-	 * @param string $url
-	 * @return string
-	 */
-    protected function _xpost( $url ) {
-		$id = self::uniqidReal(6);
-		$div = '<div id="' . $id . '"></div>';
-		$div .= '<script>var url = "' . $url . '";var id  = "' . $id . '";jbbed.xpost( url, id );</script>';
-		return $div;
-	}
-
-	/**
 	 * Add gist
 	 * @param string $url
 	 * @return string
 	 */
-    protected function _gist( $url ) {
+    protected function _jsf( $url ) {
+		$jsf = $this->args['jsfPlay'];
+
+		$display = stripos( '|', $jsf['output'] ) !== false ? '/' . str_replace('|', ',', $jsf['output']) :  '/' . $jsf['output'];
+		if( $jsf['output'] === 'all' ) {
+			$display = '/';
+		}
+
+		$theme = '/' . $jsf['theme'];
+		if( $jsf['theme'] !== 'dark') {
+			$theme = '/';
+		}
+
+		$src = $url . 'embed' . $display . $theme;
 		$id = self::uniqidReal(6);
-		return '<script id="' . $id . '" src="' . $url . '"></script>';
+		return '<script id="' . $id . '" src="' . htmlspecialchars( $src ) . '/"></script>';
 	}
 	
     /**
@@ -281,13 +301,14 @@
 	 * 
 	 * @param string $tagAttr // the html attributes
 	 * @param string $value // value to pass
+	 * @param string $bbTag // tag BB
 	 * 
      * @return array
      */
-	protected function _getHtml( $tagTraslate = '', $value = '' ) {
+	protected function _getHtml( $tagTranslate = '', $value = '', $bbTag = '' ) {
 
-		$tag_html = trim( $tagTraslate[0] );
-		$tag_attr = strlen( trim( $tagTraslate[1] ) ) === 0 ? '' : ' ' . trim( $tagTraslate[1] );
+		$tag_html = trim( $tagTranslate[0] );
+		$tag_attr = strlen( trim( $tagTranslate[1] ) ) === 0 ? '' : ' ' . trim( $tagTranslate[1] );
 		
 		$attr = str_replace( '$1', $value, $tag_attr );
 		$html = ['<' . $tag_html . $attr . '>', '</' . $tag_html . '>'];
@@ -312,96 +333,173 @@
 			
 			if( isset( $tagTranslate[$tag] ) && 
 				in_array( $tag, array_keys( $tagTranslate ) ) || 
-				$tag === 'vid' || 
-				$tag === 'xpost' ) 
+				$tag === 'vid' || $tag === 'jsf' )
 			{
+
+				// simple translate (no attrs, but the html tag is different from the bbcode tag)
+	  			if( strlen( $tagTranslate[$tag][1] ) === 0 ) {
+					$string = str_replace(
+						['[' . $tag . ']', '[/' . $tag . ']'],
+						['<' . $tagTranslate[$tag][0] . '>', '</' . $tagTranslate[$tag][0] . '>'],
+						$string
+					);
+				}
+
+				 // static translate (attrs does not require value substitution)
+	  			if( strlen( $tagTranslate[$tag][1] ) > 0 && stripos('$1', $tagTranslate[$tag][1] ) === false ) {
+
+					$open = $tagTranslate[$tag][0] . ' ' . $tagTranslate[$tag][1];
+					$close = $tagTranslate[$tag][0];
+					$beforeOpen = '';
+					$afterClose = '';
+					if( $tag === 'spoiler' ) {
+						$beforeOpen = '<div class="jbbed-spoiler-container">';
+						$afterClose = '<button type="button" class="jbbed-spoiler-button">Spoiler</button></div>';
+					}
+
+					$string = str_replace(
+						['[' . $tag . ']', '[/' . $tag . ']'],
+						[ $beforeOpen . '<' . $open . '>', '</' . $close . '>' . $afterClose],
+						$string
+					);
+				}
+
+				// dynamic translate (attrs require value substitution)
 				$regex = isset( $tagTranslate[$tag][2] ) && strlen( trim( $tagTranslate[$tag][2] ) ) > 0 ?
 					$tagTranslate[$tag][2] : '.*?';
-				$bbcode = '/\[' . $tag . '=(' . $regex . ')\]/';
-				preg_match_all( $bbcode, $string, $match );
+
+				$regex_bbcode = '/\[' . $tag . '=(' . $regex . ')\]/';
+				preg_match_all( $regex_bbcode, $string, $match );
+
 				$alias = false;
-				if( ! isset( $match[0][0] ) && ! isset( $match[1][0]) ) {
-					if( ! isset(  $tagTranslate[$tag][1] ) || 
-						( strlen( trim( $tagTranslate[$tag][1] ) ) > 0  && stripos( $tagTranslate[$tag][1], '$1' ) !== false ) ) {
-						continue;
-					} else {
+
+				foreach( $match[0] as $k => $m ) {
+					
+					$close = '[/' . $tag . ']';
+					if( $tag === 'vid' ) {
 						
-						$alias = true;
+						$bbcode = $match[0][$k];
+						$url = $match[1][$k];
+				
+						$iframe = $this->_getVideo( $url, $bbcode );
+						$string = str_replace( $bbcode, $iframe, $string );
+						
 					}
-				}
-				$close = '[/' . $tag . ']';
-				if( $tag === 'vid' ) {
-					
-					$bbcodes = $match[0];
-					$urls = $match[1];
-					
-					foreach( $urls as $k => $url ) {
-						$iframe = $this->_getVideo( $url, $bbcodes[$k] );
-						$string = str_replace( $bbcodes[$k], $iframe, $string );
+					elseif( $tag === 'jsf') {
+						$bbcode = $match[0][$k];
+						$url = $match[1][$k];
+						$jsf = $this->_jsf( $url );
+						$string = str_replace( $bbcode, $jsf, $string );
 					}
-					
-				} 
-                elseif( $tag === 'xpost') {
-					$bbcode = $match[0][0];
-					$url = $match[1][0];
-					$post = $this->_xpost( $url );
-					$string = str_replace( $bbcode, $post, $string );
-				}
-				elseif( $tag === 'gist') {
-					$bbcode = $match[0][0];
-					$url = $match[1][0];
-					$gist = $this->_gist( $url );
-					$string = str_replace( $bbcode, $gist, $string );
-				}
-                else {
-					$open = $alias === true ? '[' . $tag . ']' : $match[0][0];
-					$value = $alias === true ? '' : (isset($match[1][0]) ? $match[1][0] : '');
-					$html = $this->_getHtml($tagTranslate[$tag], $value );
-					$string = str_replace( [$open, $close], $html, $string );
-				}
+					else {
+						$open = $alias === true ? '[' . $tag . ']' : $match[0][$k];
+						$value = $alias === true ? '' : (isset($match[1][$k]) ? $match[1][$k] : '');
+						$html = $this->_getHtml($tagTranslate[$tag], $value, $tag );
+						$string = str_replace( [$open, $close], $html, $string );
+					}
+				
+				}// end foreach match
 			
 			} else {
-				$bbtag = ['[' . $tag . ']','[/' . $tag . ']'];
-				$html = ['<' . $tag . '>', '</' . $tag . '>'];
-				$string = str_replace($bbtag, $html, $string);
+				if( $tag === 'h') {
+					$string = preg_replace( '/\[(\/?' . $tag . '[0-6])\]/', '<$1>', $string );
+				} else {
+					$bbtag = ['[' . $tag . ']','[/' . $tag . ']'];
+					$html = ['<' . $tag . '>', '</' . $tag . '>'];
+					$string = str_replace($bbtag, $html, $string);
+				}
 			}
 			
 		}
 		
 		// apply autop
-		$string = $this->args['autop'] === true ? self::autop($string) : $string;
+		$string = $this->autop($string);
 		
 		return $string;
 		
 	}
 	
-	static function autop( $string ) {
+	public function autop( $string ) {
 
 	    // remove previous p
 	    $newstring = preg_replace('/<\/?p>/m', '', $string);
 	
 	    // list of html block elements
-	    $arr = [
-	      'ol','ul','pre','blockquote','hr','h1','h2','h3','h4','h5','h6',
-	      'address','article','aside','canvas','dd','div','dl','dt','fieldset',
-	      'figcaption','figure','footer','form','header','li','main',
-	      'nav','noscript','section','table','video','tfoot','nav',
-	      'table','details','dialog','hgroup','tbody','td','th','thead',
-	      'noframes','menu'
-	    ];
+	    $arr = $this->args['noWrapP'];
 	
-		$string_arr = implode('|', $arr);
+		$string_arr = is_array( $arr ) ? implode('|', $arr) : $arr;
+		
+		$regex = '/(<p>)?(<(' . $string_arr . ')([^>]+)?>(.*?)(<\/(' . $string_arr . ')>)?)<\/p>/ms';
+
+		$newstring = preg_replace('/\n|\r|\r\n/m', '</p><p>', $newstring);
+		$newstring = preg_replace('/<p><\/p>/ms', '', $newstring );
+		$newstring = preg_replace($regex, '$2', $newstring);
+		$newstring = str_replace('<p></p>', '', $newstring);
+		$newstring = preg_replace('/<\/p><p>$/ms', '', $newstring); 
+
+		// p if content has p
+		preg_match_all('/<(blockquote|div style[^>]* class="jbbed-spoiler")>(.*?)<\/(blockquote|div)>/', $newstring, $match );
+		foreach( $match[2] as $m ) {
+			if( stripos( $m, '<p>' ) !== false ) {
+				$nm = '<p>' . $m;
+				$newstring = str_replace( $m, $nm, $newstring );
+			}
+		}
+
+		/**
+		 * Unlike the JS processor, this parse closes on the first available tag. 
+		 * So in the case of "<strong>Hello <strong>World</strong>, Hi!</strong>", 
+		 * this will become: "<strong>Hello World</strong>, Hi!"
+		 */
+		$noTagIntoTag = $this->args['noTagIntoTag'];
+		$string_arr = is_array( $noTagIntoTag ) ? implode('|', $noTagIntoTag) : $noTagIntoTag;
+		preg_match_all('/<((' . $string_arr . ')([^>]*))>(.*?)<\/(' . $string_arr . ')>/', $newstring, $match );
+		foreach( $match[0] as $key => $m ) {
+			$open = '<' . $match[1][$key] . '>';
+			$close = '</' . $match[2][$key] . '>';
+			$nm = $open . strip_tags( $m ) . $close;
+			$newstring = str_replace( $m, $nm, $newstring );
+		}
 	
-	    $newstring = preg_replace('/<br><br>(.*?)<br><br>/m', '</p>$1<p>', $newstring);
-	    $newstring = preg_replace('/(<(' . $string_arr . '))/m', '</p>$1', $newstring);
-	    $newstring = preg_replace('/(<\/(' . $string_arr . ')>)<\/p>/m', '$1', $newstring); 
-	    $newstring = preg_replace('/(<(hr)>)<\/p>/m', '$1', $newstring);
-	    $newstring = preg_replace('/<\/p>([^<])/m', '<br>$1', $newstring);
-	    $newstring = preg_replace('/<\/p>$/m', '', $newstring); 
-	    $newstring = str_replace('<p></p>', '', $newstring);
+		// decode code into pre
+		$newstring = self::decodeContentCode( $newstring );
 	
 	    return '<p>' . $newstring . '</p>';
-  }
+    }
+
+
+	/**
+	 * Encode content code
+	 * @param string $string
+	 * return string
+	 */
+	static function encodeContentCode( $string ) {
+		// encode all content into code tags
+		preg_match_all('/\[code\](.*?)\[\/code\]/ms', $string, $matches );
+		$content_code = $matches[1];
+		$encode = [];
+		foreach( $content_code as $content ) {
+			$encode[] = base64_encode( $content );
+		}
+		return str_replace( $content_code, $encode, $string );
+	}
+
+	/**
+	 * Decode content code
+	 * @param string $string
+	 * return string
+	 */
+	static function decodeContentCode( $string ) {
+		// decode all content into code tags
+		preg_match_all('/<pre>(.*?)<\/pre>/ms', $string, $matches );
+		$content_code = $matches[1];
+		$decode = [];
+		foreach( $content_code as $content ) {
+			$content = preg_replace('/(\n)(.*?)(\n)/', '<li><code>$2</code><li>', base64_decode( $content ) );
+			$decode[] = '<ol><li><code>' . $content . '</code></li></ol>';
+		}
+		return str_replace( $content_code, $decode, $string );
+	}
 
     /**
      * Generate unique id
@@ -436,4 +534,36 @@
 function jbbed_convert( $string = '', $args = [], $replace = false, $remove = ''  ) {
     $inst = new jbbedDecode( $string, $args, $replace, $remove  );
     return $inst->convert();
+}
+
+/**
+ * Implements spoiler. Add this function in the header or body
+ * @param int|string $slide
+ * @param string $buttonShow
+ * @param string $buttonHide
+ */
+function jbbed_spoiler( $slide = 400, $buttonShow = 'Spoiler', $buttonHide = 'Hide') {
+	?>
+	<script>
+		jQuery(function($) {
+			const slide = '<?php echo abs(intval($slide)); ?>',
+				  buttonShow = '<?php echo htmlspecialchars( $buttonShow ); ?>',
+				  buttonHide = '<?php echo htmlspecialchars( $buttonHide ); ?>';
+
+			$('.jbbed-spoiler').each(function() {
+				// action show/hide
+				$(this).next('button').on("click", function() {
+					const btn = $(this);
+					btn.prev().toggle(slide, function() {
+						if( ! $(this).is(':hidden')) {
+							btn.text(buttonShow);
+						} else {
+							btn.text(buttonHide)
+						}
+					});
+				});
+			});
+		});
+	</script>
+	<?php
 }
