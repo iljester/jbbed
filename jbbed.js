@@ -70,16 +70,16 @@
     $(previewContainer).insertAfter(this);
 
     // get buttons frame
-    inst.buttons($);
+    inst.buttons();
 
     // get fullscreen frame
-    inst.fullscreen( $ );
+    inst.fullscreen();
 
     // get preview frame;
-    inst.preview($);
+    inst.preview();
 
     // do BBCode
-    inst.textarea($);
+    inst.textarea();
 
   };
 
