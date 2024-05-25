@@ -36,5 +36,4 @@ https://www.iljester.com/jbbed/example.php
 
 ### Versions:
 
-* 1.0b
-Development version
+* 1.0b: development version
