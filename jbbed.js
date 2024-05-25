@@ -162,7 +162,7 @@ class Jbbed {
               'Red:#ff0000','Orange:#ffa500','Yellow:#ffff00','White:#ffffff'],
       h:     ['H1:1', 'H2:2', 'H3:3', 'H4:4', 'H5:5', 'H6:6']
     },
-    keepBars: true,
+    keepBars: false,
     selectiveRemove: ['script', 'iframe'],
     video: {
       youtube: [560, 315, 0], // width, height, noocookie (1: yes, 0: no)
@@ -365,6 +365,7 @@ class Jbbed {
       tiny = true;
       this.tiny = tiny;
     }
+
 
     // merge single tags
     params.single = Jbbed.explodeString(params.single, '|');

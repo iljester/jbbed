@@ -158,8 +158,11 @@ jQuery(function($) {
         }
     });
 
-    $('textarea').jbbed({
-        theme: 'classic'
+    $('#t').jbbed({
+        theme: 'classic',
+        bars: {
+            1: ['b', 'i', 'u']
+        }
     });
 });
 </script>
