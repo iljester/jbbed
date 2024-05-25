@@ -1,11 +1,13 @@
-### jbbed Code
-BBCode Editor
+### Jbbed Editor
 
 ### Description
 A simple BB editor in JQuery fully customizable.
 
 ### Require
-This plugin requires JQuery
+This plugin requires JQuery.
+
+### Important
+A beta version is currently being released not for production purposes but for testing.
 
 ### Basic Usage
 
@@ -25,7 +27,7 @@ echo jbbed_convert( $string );
 ```
 ### Params
 
-For params, please see wiki.
+For params, please see class Jbbed and/or wiki.
 
 ### Versions:
 
