@@ -1,4 +1,4 @@
-### Jbbed Editor
+## Jbbed Editor
 
 ### Description
 A simple BB editor in JQuery fully customizable.
@@ -6,7 +6,7 @@ A simple BB editor in JQuery fully customizable.
 ### Require
 This plugin requires JQuery.
 
-### Important
+### Additional informations
 A beta version is currently being released not for production purposes but for testing.
 
 ### Basic Usage
@@ -36,5 +36,5 @@ https://www.iljester.com/jbbed/example.php
 
 ### Versions:
 
-#### 1.0b
+* 1.0b
 Development version
