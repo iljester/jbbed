@@ -3,7 +3,7 @@
  * jbbed php processor
  * Convert bbcode in html tags
  * @author iljester <thejester72@gmail.com>
- * @web https://github.com/iljester, www.iljester.com
+ * @website https://github.com/iljester, https://www.iljester.com
  * @package jbbed editor plugin
  * (c) 2024
  * @version 1.0beta

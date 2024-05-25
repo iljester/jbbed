@@ -1,14 +1,11 @@
 <?php require_once('jbbed.php'); ?>
-
-<?php 
-if( isset( $_POST['data'] ) ):
-var_dump( $_POST['data'] ); die(); endif; ?>
 <!doctype html>
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>jbbed</title>
+<title>Jbbed Editor</title>
+<meta name="description" content="A simple BB editor">
 <style>
     .change-theme {
         padding: 10px;

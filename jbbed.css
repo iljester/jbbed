@@ -1,7 +1,7 @@
 @charset "UTF-8";
 /* CSS Document
  * @author iljester <thejester72@gmail.com>
- * web https://github.com/iljester, www.iljester.com
+ * website https://github.com/iljester, https://www.iljester.com
  * @package jbbed editor plugin
  * (c) 2024
  * @version 1.0beta
@@ -580,6 +580,15 @@
   border-radius: 4px;
 }
 
+.jbbed-modern.jbbed-dark .jbbed-spoiler-container {
+  background-color: #333131;
+  border-color: #747474;
+}
+
+.jbbed-modern.jbbed-dark .jbbed-spoiler-container div {
+  background-color: #454545;
+}
+
 .jbbed-preview pre {
   font-size: 14px;
   background-color: #e0ffe0;
@@ -634,7 +643,7 @@
 .jbbed-preview blockquote {
   padding: 10px;
   border-left: 4px solid #9c9c9c;
-  background-color: #00000017;
+  background-color: #00000038;
 }
 
 .jbbed-preview ul, 
