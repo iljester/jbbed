@@ -159,10 +159,7 @@ jQuery(function($) {
     });
 
     $('#t').jbbed({
-        theme: 'classic',
-        bars: {
-            1: ['b', 'i', 'u']
-        }
+        theme: 'classic'
     });
 });
 </script>
