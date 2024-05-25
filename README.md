@@ -31,7 +31,7 @@ For params, please see class Jbbed and/or wiki.
 
 ### Demo link
 
-YouYou can find a working example at this address:
+You can find a working example at this address:
 https://www.iljester.com/jbbed/example.php
 
 ### Versions:
