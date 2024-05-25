@@ -36,4 +36,5 @@ https://www.iljester.com/jbbed/example.php
 
 ### Versions:
 
+* 1.1b: default: keepbars is set to false
 * 1.0b: development version
