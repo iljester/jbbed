@@ -144,13 +144,14 @@ class Jbbed {
       1: ['b', 'i', 'u', 's', '#', 'link', 'img', 'vid', '#', 'ol', 'ul', 'li', '#', 'quote', 'code'],
       2: ['size', 'font', 'color', 'h', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'hr', 'spoiler', '#', 'smileys', 'jsf', '#', 'clear'],
     },
-    modal: ['size', 'color', 'font', 'h', 'jsf'],
+    modal: ['size', 'color', 'font', 'h'],
     modalArgs: {
       preview: true,
       previewSentence: 'The quick brown fox jumps over the lazy dog',
       previewBgColor: 'theme', // or hex color
       previewTextColor: 'theme', // or hex color
-      palette: false
+      palette: false,
+      keepDefault: true
     },
     single: ['hr', 'img', 'smileys', 'vid', 'jsf'],
     select: {
@@ -372,9 +373,11 @@ class Jbbed {
     params.single = defaults.single.concat(params.single);
 
     // merge modal
-    params.modal = Jbbed.explodeString(params.modal, '|');
-    params.modal = defaults.modal.concat(params.modal);
-
+    if( params.modalArgs.keepDefault === true ) {
+      params.modal = Jbbed.explodeString(params.modal, '|');
+      params.modal = defaults.modal.concat(params.modal);
+    }
+  
     // fallback for video attributes
     for( const d in defaults.video) {
       params.video[d] = Jbbed.explodeString( params.video[d], '|');
@@ -970,6 +973,7 @@ class Jbbed {
             case 'img'   : modal.push(buttons[b]); break;
             case 'vid'   : modal.push(buttons[b]); break;
             case 'smileys' : modal.push(buttons[b]); break;
+            case 'jsf'   : modal.push(buttons[b]); break;
           }
           let actionClass = modal.includes(buttons[b]) ? 'modal-action-' + ID + ' ' : 'button-action-' + ID + ' '; // temp per ora.
           const elButton = Jbbed.createElement(

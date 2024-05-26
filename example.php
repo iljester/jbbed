@@ -159,7 +159,9 @@ jQuery(function($) {
     });
 
     $('#t').jbbed({
-        theme: 'classic'
+        theme: 'classic',
+        modal: ['size'],
+        modalArgs: { keepDefault: false }
     });
 });
 </script>
