@@ -1,0 +1,155 @@
+.jbbed-container {
+    background-color: #eee;
+    border: 1px solid #ddd;
+}
+
+.jbbed-editor, 
+.jbbed-preview {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+}
+
+.jbbed-bar {
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+}
+
+.jbbed-button,
+.jbbed-label,
+.jbbed-modal {
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+}
+
+.jbbed-button.jbbed-disabled:hover {
+    border-color: #ccc;
+}
+
+.jbbed-label {
+    background-color: transparent;
+}
+
+.jbbed-button.jbbed-smileys {
+    background-color: #eee;
+}
+
+.jbbed-button-select {
+    border: 1px solid #ccc;
+}
+
+.jbbed-button:hover {
+    border-color: #000;
+}
+
+.jbbed-sep:before {
+    border-left: .5px solid #c4c4c4;
+    border-right: .5px solid #c4c4c4;
+}
+
+.jbbed-wrapper-tab {
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+}
+
+.jbbed-tab-editor li,
+.jbbed-fullscreen-button {
+    background-color: #f7f7f7; 
+    border: 1px solid #ccc;
+}
+
+.jbbed-dialog {
+    background-color: #eee;
+    border: 1px solid #ccc;
+    box-shadow: 0 11px 11px 4px #00000017;
+}
+
+.jbbed-dialog-preview {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ddd;
+}
+
+.jbbed-color {
+    border: 1px solid #888;
+}
+
+.jbbed-color:hover {
+    border-color: #000;
+}
+
+.jbbed-color.checked::before {
+    text-shadow: 0 0 1px #000;
+    color: #fff; 
+}
+
+.jbbed-del {
+    background-color: transparent;
+}
+
+.jbbed-del:before,
+.jbbed-del:after {
+  background-color: #feac16;
+  border: 1px solid #5a5a5a;
+}
+
+.jbbed-del:before {
+    text-shadow: 1px 0px 1px #000;
+    color: #000;
+}
+
+.jbbed-ok, 
+.jbbed-no {
+  background-color: #eee; 
+  border: 1px solid #8f8f8f; 
+}
+
+.jbbed-ok {
+    color: green;
+}
+
+.jbbed-ok:hover {
+    border-color: green;
+}
+
+.jbbed-no {
+    color: red;
+}
+
+.jbbed-no:hover {
+    border-color: red;
+}
+
+.jbbed-spoiler-container {
+    border: 1px dashed #acacac;
+    background-color: #eee;
+}
+  
+.jbbed-spoiler-container div {
+    background-color: #fff;
+}
+
+.jbbed-spoiler-container button {
+    background-color: #d14b4b;
+    border: 1px solid #474747; 
+    color: #fff;
+}
+
+.jbbed-preview pre {
+    background-color: #e0ffe0; 
+    color: #086208;
+    border-left: 4px solid green;
+}
+
+.jbbed-preview pre li {
+    border-bottom: 1px solid #9ed89e63;
+}
+
+.jbbed-preview blockquote {
+    border-left: 4px solid #9c9c9c;
+    background-color: #00000038;
+}
+
+.jsfiddle-snippet {
+    background-color: #eee;
+    box-shadow: 0px 10px 8px -4px #0000006b;
+}

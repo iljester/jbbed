@@ -27,14 +27,13 @@ echo jbbed_convert( $string );
 ```
 ### Params
 
-For params, please see class Jbbed and/or wiki.
+For params, please see class Jbbed and/or instructions [on my site](https://www.iljester.com/portfolio/jbbed-editor/).
 
 ### Demo link
 
 You can find a working example at this address:
-https://www.iljester.com/jbbed/example.php
+https://www.iljester.com/demo/jbbed/example.php
 
 ### Versions:
 
-* 1.1b: default: keepbars is set to false
 * 1.0b: development version

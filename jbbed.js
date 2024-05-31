@@ -43,8 +43,7 @@
           frame = inst.frame,
           mainContainer    = frame.main,
           previewContainer = frame.preview,
-          buttonsContainer = frame.buttons,
-          smileysContainer   = frame.smileys;
+          buttonsContainer = frame.buttons;
 
     // add buttons container
     $(buttonsContainer).insertBefore(this);
@@ -52,18 +51,17 @@
     // add wrap container
     $(this).prev().wrap(mainContainer); // wrap buttons into mainContainer
     $(this).prev().append(this); // append editor textarea
-    switch( inst.params.theme ) {
-      case 'modern' :
-        $(this).closest('#' + mainContainer.id).addClass('jbbed-modern jbbed-template');
-        break;
-      case 'classic' :
-        $(this).closest('#' + mainContainer.id).addClass('jbbed-classic jbbed-template');
-        break;
-      case 'dark' :
-        $(this).closest('#' + mainContainer.id).addClass('jbbed-modern jbbed-dark jbbed-template');
-        break;
-      case 'custom' :
-        $(this).closest('#' + mainContainer.id).addClass('jbbed-custom jbbed-template');
+
+    // set theme style
+    if( false !== inst.params.themeArgs.style ) {
+      let theme = 'jbbed-' + inst.params.themeArgs.style;
+      $(this).closest('#' + mainContainer.id).addClass(theme + ' jbbed-template');
+      $(inst.styleTheme).insertAfter('#jbbed-css');
+    }
+
+    // set icons style
+    if( false !== inst.params.themeArgs.icons ) {
+      $(inst.styleIcons).insertBefore('#jbbed-css');
     }
 
     // insert preview after textarea
@@ -126,24 +124,41 @@ class Jbbed {
   buttonLocalized = {};
 
   /**
-   * Tiny bar
-   */
-  tiny = false;
-
-  /**
    * The video inserted by the user
    */
   video;
+
+  /**
+   * Current theme
+   */
+  styleTheme = false;
+
+  /**
+   * 
+   */
+  styleIcons;
 
   /**
    * Default params
    */
   static defaults = {
     editorID: '',
+    themeArgs: {
+      style: 'classic',
+      icons: true,
+      dirUri: '',
+    },
     bars: {
       1: ['b', 'i', 'u', 's', '#', 'link', 'img', 'vid', '#', 'ol', 'ul', 'li', '#', 'quote', 'code'],
       2: ['size', 'font', 'color', 'h', '#', 'alignleft', 'aligncenter', 'alignright', '#', 'hr', 'spoiler', '#', 'smileys', 'jsf', '#', 'clear'],
     },
+    barArgs: {
+      keepDefault: false,
+      selectiveRemove: ['script', 'iframe'],
+      buttonsIcon: true,
+      tiny: false
+    },
+    single: ['hr', 'img', 'smileys', 'vid', 'jsf'],
     modal: ['size', 'color', 'font', 'h'],
     modalArgs: {
       preview: true,
@@ -153,18 +168,15 @@ class Jbbed {
       palette: false,
       keepDefault: true
     },
-    single: ['hr', 'img', 'smileys', 'vid', 'jsf'],
     select: {
-      size:  [10,12,14,16,18,20,22,24,26,28,30],
-      font:  ['Arial', 'Times New Roman', 'Lucida Sans', 'Roboto', 'Monospace', 'Courier', 'Helvetica', 'Georgia'],
-      color: ['Black:#000000', 'Grey:#808080', 'Lightgrey:#d3d3d3', 'Blue:#0000ff', 
+      size:  ['--:0', 10,12,14,16,18,20,22,24,26,28,30],
+      font:  ['--:0', 'Arial', 'Times New Roman', 'Lucida Sans', 'Roboto', 'Monospace', 'Courier', 'Helvetica', 'Georgia'],
+      color: ['--:0', 'Black:#000000', 'Grey:#808080', 'Lightgrey:#d3d3d3', 'Blue:#0000ff', 
               'Lightblue:#add8e6', 'Green:#008000', 'Lightgreen:#90ee90', 'Purple:#800080', 
               'Violet:#ee82ee', 'Pink:#ffc0cb','Brown:#a52a2a','Saddlebrown:#8b4513',
               'Red:#ff0000','Orange:#ffa500','Yellow:#ffff00','White:#ffffff'],
-      h:     ['H1:1', 'H2:2', 'H3:3', 'H4:4', 'H5:5', 'H6:6']
+      h:     ['--:0', 'H1:1', 'H2:2', 'H3:3', 'H4:4', 'H5:5', 'H6:6']
     },
-    keepBars: false,
-    selectiveRemove: ['script', 'iframe'],
     video: {
       youtube: [560, 315, 0], // width, height, noocookie (1: yes, 0: no)
       rumble:  [640, 360], // width, height
@@ -176,7 +188,7 @@ class Jbbed {
       color:['span', 'style="color:$1;"', "[a-fA-F0-9#]+"],
       link: ['a', 'href="$1"', "[^<>\\]\\[\\s]+"],
       img:  ['img', 'src="$1"', "[^<>\\s]+"],
-      b:    ['strong', '', ''],
+      b:    ['strong', ''],
       i:    ['em', '', ''],
       quote: ['blockquote', '', ''],
       code: ['pre', '', ''],
@@ -215,8 +227,6 @@ class Jbbed {
     smileys: true,
     fullscreen: true,
     showPreview: true,
-    theme: 'classic',
-    buttonsIcon: true,
     localizeButtons: {
       b:            ['label:B', 'title:Bold', 'className:jbbicon-b jbbicon'],
       i:            ['label:I', 'title:Italic', 'className:jbbicon-i jbbicon'],
@@ -265,6 +275,11 @@ class Jbbed {
   static tinyBar = ['b', 'i', 'link', 'img', 'ul', 'ol', 'li', 'quote', 'hr', 'spoiler'];
 
   /**
+   * Size unit
+   */
+  static sizeUnits = ['px', 'pt', 'em', 'rem', '%'];
+
+  /**
    * The constructor
    * @param {object} editor
    * @param {object} params
@@ -283,6 +298,12 @@ class Jbbed {
 
     // frames
     this.frames();
+
+    // theme
+    this.loadTheme();
+
+    // icons
+    this.loadIcons();
 
     // set allowed tags
     this.allowedTags();
@@ -344,7 +365,7 @@ class Jbbed {
   }
 
   /**
-   * Parse values
+   * Parse and validate values
    */
   parseValues() {
 
@@ -352,83 +373,305 @@ class Jbbed {
     params    = this.params,
     defaults  = Jbbed.defaults;
 
+    // get missing keys for params
     for (const d in defaults) {
       if (typeof params[d] === "undefined") {
         params[d] = defaults[d];
       }
     }
 
-    // bars tiny?
-    let tiny = false;
-    if( params.bars === 'tiny') {
+    /**
+     * Where marked with (*), arguments not present 
+     * in params must be retrieved from the default settings
+     */
+
+    // parse themeArgs (*)
+    params.themeArgs = Jbbed.compare(params.themeArgs, defaults.themeArgs, -1, false, (v, k, d) => {
+      switch( k ) {
+        case 'style' : 
+          v = v !== false && /[a-z0-9_-]+/gi.test(v) === false ? d[k] : v;
+          break;
+        case 'icons' :
+          v = Boolean(v);
+          break;
+        case 'dirUri' : 
+          v = /[^<>\?=&#]+/gi.test(v) === false ? d[k] : v;
+          break;
+      }
+      return v;
+    });
+
+    // parse barsArgs (*)
+    params.barArgs = Jbbed.compare(params.barArgs, defaults.barArgs, -1, false, (v, k, d) => {
+      switch( k ) {
+        case 'keepDefault' || 'buttonsIcon' || 'tiny' : 
+          v = Boolean(v); 
+          break;
+        case 'selectiveRemove' : 
+          if( v.length === 0 || ! Array.isArray(v) ) {
+            v = d[k]; 
+          }
+          break;
+      }
+      return v;
+    });
+
+    // parse bars
+    if( params.barArgs.tiny === true ) {
+      // set tiny
       params.bars = { 1: Jbbed.tinyBar };
       params.smileys = false;
-      tiny = true;
-      this.tiny = tiny;
+    } else {
+      // parse bars *
+      const keepBars = params.barArgs.keepDefault;
+      params.bars = Jbbed.compare(params.bars, defaults.bars, -1, keepBars);
     }
 
-
-    // merge single tags
-    params.single = Jbbed.explodeString(params.single, '|');
-    params.single = defaults.single.concat(params.single);
-
-    // merge modal
-    if( params.modalArgs.keepDefault === true ) {
-      params.modal = Jbbed.explodeString(params.modal, '|');
-      params.modal = defaults.modal.concat(params.modal);
-    }
-  
-    // fallback for video attributes
-    for( const d in defaults.video) {
-      params.video[d] = Jbbed.explodeString( params.video[d], '|');
-      if( params.video[d].length !== 2 || params.video[d] === false ) {
-        params.video[d] = defaults.video[d];
-      }
-    }
-
-    // fallback for localize buttons
-    for( const d in defaults.localizeButtons) {
-      params.localizeButtons[d] = Jbbed.explodeString( params.localizeButtons[d], '|');
-      if( params.localizeButtons[d].length === 0 || params.localizeButtons[d] === false ) {
-        params.localizeButtons[d] = defaults.localizeButtons[d];
-      }
-    }
-
-    // keep default buttons if true
-    if( tiny === false ) {
-      if (params.keepBars === true) {
-        params.bars = Jbbed.keepMerge(params.bars, defaults.bars);
-      } 
-      else if( typeof params.keepBars === 'string' || typeof params.keepBars === 'number' ) {
-        params.bars = Jbbed.selectiveKeep(params.keepBars, params.bars);
-      }
-    }
-
+    // define all buttons
     const buttons = params.bars;
     let allButtons = [];
     for( const [key, value] of Object.entries(buttons)) {
-      allButtons = allButtons.concat(value);
+      allButtons = allButtons.concat(Jbbed.explodeString( value, '|' ));
     }
     this.allButtons = allButtons.filter((v) => v !== '#');
 
-    // deep merge for select
-    params.select = Jbbed.keepMerge(params.select, defaults.select);
+    // parse single tags
+    // no need to compare
+    params.single = Jbbed.explodeString(params.single, '|');
+    if( Array.isArray(params.single) ) {
+      params.single = defaults.single.concat(params.single);
+    } else {
+      params.single = defaults.single;
+    }
+    
+    // parse modalArgs (*)
+    params.modalArgs = Jbbed.compare(params.modalArgs, defaults.modalArgs, -1, false, (v, k, d) => {
+      switch( k ) {
+        case 'preview' || 'palette' || 'keepDefault' : 
+          v = Boolean(v); 
+          break;
+        case 'previewSentence' : 
+          if( typeof v !== 'string' || v.length === 0 ) {
+            v = d[k]; 
+          }
+          break;
+        case 'previewColor' || 'previewTextColor' :
+          if( v !== 'theme' && /(#[a-fA-F0-9]{6})/gi.test(v) === false ) {
+            v = d[k];
+          }
+          break;
+      }
+      return v;
+    });
 
-    // deep merge tagTranslate
-    params.tagTranslate = Jbbed.keepMerge( params.tagTranslate, defaults.tagTranslate);
+    // parse modal
+    // no need to compare
+    params.modal = Jbbed.explodeString(params.modal, '|');
+    const keepModal = params.modalArgs.keepDefault;
+    if( keepModal === true ) {
+      params.modal = defaults.modal.concat(params.modal);
+    }
 
-    // parse some values of previewArgs
-    params.previewArgs.noTagIntoTag = Jbbed.explodeString(params.previewArgs.noTagIntoTag, '|');
-    params.previewArgs.contentWrapP = Jbbed.explodeString(params.previewArgs.contentWrapP, '|');
-    params.previewArgs.noWrapP = Jbbed.explodeString(params.previewArgs.noWrapP, '|');
+    // parse select
+    params.select = Jbbed.compare(params.select, defaults.select);
 
-    // add class to spoiler arg if not exists
+    // parse video
+    // no need to compare
+    for( let [key, value] of Object.entries(params.video) ) {
+    	if( typeof value === 'string' && value.indexOf('|') > -1 ) {
+      	params.video[key] = explodeString(value, '|');
+      }
+      if( ! Array.isArray(value) ) {
+        value = [value];
+      }
+      params.video[key] = value.filter((v) => v !== '');
+      for( const v in defaults.video[key] ) {
+        if( typeof params.video[key][v] === 'undefined' ) {
+          params.video[key].push(defaults.video[key][v])
+        } else {
+        	params.video[key][v] = Jbbed.intVal(params.video[key][v]);
+        }	
+      }
+    }
+
+    // parse sizeUnit
+    if( ! Jbbed.sizeUnits.includes(params.sizeUnit)) {
+      params.sizeUnit = defaults.sizeUnit;
+    }
+
+    // parse TagTranslate (*)
+    params.tagTranslate = Jbbed.compare(params.tagTranslate, defaults.tagTranslate, 2, false, (v, k, d) => {
+      if( v.length === 0 || ! Array.isArray(v) ) {
+        if( d.hasOwnProperty(k) ) {
+          return d[k];
+        } else {
+          return ['', '', ''];
+        }
+      } else {
+        switch( v.length) {
+          case 1 : v.push('', ''); break;
+          case 2 : v.push(''); break;
+        }
+        return v;
+      }
+    });
+
+    // parse textareaArgs (*)
+    params.textareaArgs = Jbbed.compare(params.textareaArgs, defaults.textareaArgs, -1, false, (v, k, d) => {
+      switch(k) {
+        case 'cols' || 'rows' : 
+          v = Jbbed.intVal(v);
+          break;
+        case 'width' || 'height' :
+          if( /[0-9]+(em|px|pt|vw|%|rem)/gi.test(v) === false ) {
+            v = d[k];
+          }
+          break;
+        case 'indent' :
+          v = Boolean(v);
+          break;
+        case 'font':
+          if( typeof v !== 'string') {
+            v = d[k];
+          }
+      }
+      return v;
+    });
+
+    // parse previewArgs (*)
+    params.previewArgs = Jbbed.compare(params.previewArgs, defaults.previewArgs, -1, false, (v, k, d) => {
+      switch(k) {
+        case 'width' || 'height' :
+          if( /[0-9]+(em|px|pt|vw|%|rem)/gi.test(v) === false ) {
+            v = d[k];
+          }
+          break;
+        case 'contentWrapP' || 'noWrapP' || 'noTagIntoTag' :
+          if( ! Array.isArray(v) || v.length === 0 ) {
+            v = d[k];
+          }
+          break;
+        case 'font':
+          if( typeof v !== 'string') {
+            v = d[k];
+          }
+      }
+      return v;
+    });
+
+    // parse spoilerArgs (*)
+    params.spoilerArgs = Jbbed.compare(params.spoilerArgs, defaults.spoilerArgs, -1, false, (v, k, d) => {
+        switch(k) {
+          case 'className' :
+            if( v.length > 0 && /[a-z0-9\s_-]+/gi.test(v) === false ) {
+              v = d[k];
+            }
+            break;
+          case 'buttonHide' || 'buttonShow' : 
+            if( v.length === 0 || /[^<>]+/gi.test(v) === false ) {
+              v = d[k];
+            }
+            break;
+          case 'slide' :
+            v = Jbbed.intVal(v);
+            break;
+        }
+        return v;
+    });
+
+    // add class to spoiler arg if not exists (*)
     if( params.spoilerArgs.className.length === 0 ) {
       params.tagTranslate.spoiler[1] = params.tagTranslate.spoiler[1] + ' class="' + params.editorID + '-spoiler' + '"';
       params.spoilerArgs.className = params.editorID + '-spoiler';
     }
 
+    // parse jsfPlay
+    params.jsfPlay = Jbbed.compare(params.jsfPlay, defaults.jsfPlay, -1, false, (v, k, d) => {
+      if( typeof v !== 'string') {
+        return d[k];
+      }
+      return v;
+    });
+
+    // parse smileys
+    params.smileys = Boolean(params.smileys);
+
+    // parse fullscreen
+    params.fullscreen = Boolean(params.fullscreen);
+
+    // parse showPreview
+    params.showPreview = Boolean(params.showPreview);
+
+    // parse localizeButtons (*)
+    params.localizeButtons = Jbbed.compare(params.localizeButtons, defaults.localizeButtons, 2, false, (v, k, d) => {
+      if( v.length === 0 || ! Array.isArray(v) ) {
+        if( d.hasOwnProperty(k) ) {
+          v = d[k];
+        } else {
+          v = ['', '', ''];
+        }
+      } else {
+        switch( v.length) {
+          case 1 : v.push('', ''); break;
+          case 2 : v.push(''); break;
+        }
+        return v;
+      }
+    });
+
+    // parse localizeMessages (*)
+    params.localizeMessages = Jbbed.compare(params.localizeMessages, defaults.localizeMessages, 2, false, (v, k, d) => {
+      if( typeof v !== 'string' ) {
+        return d[k];
+      }
+      return v;
+    });
+
     this.params = params;
+  }
+
+  /**
+   * Load theme
+   * @returns boolean
+   */
+  loadTheme() {
+    const theme = this.params.themeArgs.style,
+          dirUri = this.params.themeArgs.dirUri,
+          element = Jbbed.createElement(
+            'link',
+            {
+              href: dirUri + 'themes/' + 'jbbed-' + theme + '.css',
+              rel: 'stylesheet'
+            }
+          );
+
+    if( false === theme ) {
+      return;
+    }
+
+    this.styleTheme = element;
+  }
+
+  /**
+   * Load icons
+   * @returns false
+   */
+  loadIcons() {
+    const icons = this.params.themeArgs.icons,
+          dirUri = this.params.themeArgs.dirUri,
+          element = Jbbed.createElement(
+            'link',
+            {
+              href: dirUri + 'themes/icons/css/jbbicon.css',
+              rel: 'stylesheet'
+            }
+          );
+
+    if( false === icons ) {
+      return;
+    }
+
+    this.styleIcons = element;
   }
 
   /**
@@ -436,13 +679,12 @@ class Jbbed {
    */
   allowedTags() {
 
-    const buttons    = this.allButtons,
-          selectiveR = this.params.selectiveRemove;
-    
-    const allowed   = [],
-          to_remove = Jbbed.explodeString( selectiveR, '|' );
+    const buttons    = Jbbed.explodeString( this.allButtons, '|' ),
+          selectiveR = Jbbed.explodeString( this.params.barArgs.selectiveRemove, '|' ),
+          allowed    = [];
+
     for( const b in buttons ) {
-      if( to_remove.includes(buttons[b] ) ) {
+      if( selectiveR.includes(buttons[b] ) ) {
         continue;
       } else {
         allowed.push(buttons[b]);
@@ -490,19 +732,19 @@ class Jbbed {
     ID               = this.ID, 
     dataButton       = thisButton.attr('data-button'),
     buttonId         = '#' + thisButton.attr('id'),
-    args             = {},
     select           = this.params.select,
     inselect         = Object.getOwnPropertyNames(this.params.select),
     modalArgs        = this.params.modalArgs,
     localizeButtons  = this.params.localizeButtons,
     localizeMessages = this.params.localizeMessages,
-    buttonsIcon      = this.params.buttonsIcon,
+    buttonsIcon      = this.params.barArgs.buttonsIcon,
     sizeUnit         = this.params.sizeUnit,
     smileys          = this.params.smileys,
     video            = this.params.video,
     jbbedD           = ID + '-d';
 
-    let type = 'url';
+    let type = 'url',
+        args = {};
 
     // smileys button
     type = dataButton === 'smileys' && smileys !== false ? 'smileys' : type;
@@ -895,7 +1137,7 @@ class Jbbed {
     inselect        = Object.getOwnPropertyNames(this.params.select),
     select          = this.params.select,
     allowed         = this.allowed,
-    buttonsIcon     = this.params.buttonsIcon,
+    buttonsIcon     = this.params.barArgs.buttonsIcon,
     smileys           = this.params.smileys,
     modal           = this.params.modal,
     btnsContainer   = this.frame.buttons,
@@ -1026,7 +1268,7 @@ class Jbbed {
     mainContainer       = this.frame.main,
     previewContainer    = this.frame.preview,
     editor              = this.editor[0],
-    buttonsIcon         = this.params.buttonsIcon,
+    buttonsIcon         = this.params.barArgs.buttonsIcon,
     tabContainer        = this.frame.tab,
     fsButton            = 'fullscreen',
     noShowPrev          = this.params.showPreview === false ? ' no-show-preview' : '',
@@ -1122,7 +1364,7 @@ class Jbbed {
     }
 
     // if src is unset or empty, return false
-    if (modals.includes(tag) && ( attr === null || typeof attr === 'undefined' )) {
+    if (modals.includes(tag) && ( attr === null || typeof attr === 'undefined' || attr === 'undefined' )) {
       return false;
     } else if (modals.includes(tag) && attr.trim() === "") {
       return false;
@@ -1137,12 +1379,10 @@ class Jbbed {
     // let hasAttr = Object.getOwnPropertyNames(tagTranslate);
     if (inselect.includes(tag) && ! modals.includes(tag)) {
       let value = thisButton.val().trim();
-      //if ( hasAttr.includes(tag) ) {
-        attr = value.length > 0 ? ( tag !== 'h' ? "=" : '' ) + value + (tag === "size" ? sizeUnit : "") : false;
-        if( attr === false ) {
-          return false;
-        }
-      //} 
+      attr = value.length > 0 ? ( tag !== 'h' ? "=" : '' ) + value + (tag === "size" ? sizeUnit : "") : false;
+      if( attr === false ) {
+        return false;
+      }
     }
 
     // create tag BB
@@ -1358,7 +1598,7 @@ class Jbbed {
       const htmlTag   = value[0].trim();
       const attrs     = value[1].trim();
       let filter      = ".*?";
-      if ( typeof value[2].trim().length > 0 ) {
+      if ( value[2].trim().length > 0 ) {
         filter = value[2].trim();
       }
 
@@ -1433,20 +1673,6 @@ class Jbbed {
     // remove previous p
     newstring = newstring.replace(/<\/?p>/gm, '');
 
-    // list of html block elements
-    // It's not the best system, 
-    // but for now it's the one that works, 
-    // because the conversion process is done at the regex level.
-    /*
-    const arr = [
-      'ol','ul','pre','blockquote','hr','h1','h2','h3','h4','h5','h6',
-      'address','article','aside','canvas','dd','div','dl','dt','fieldset',
-      'figcaption','figure','footer','form','header','li','main',
-      'nav','noscript','section','table','video','tfoot','nav',
-      'table','details','dialog','hgroup','tbody','td','th','thead',
-      'noframes','menu', 'p'
-    ];*/
-
     const regex = new RegExp('<p>(<(' + noWrapP.join('|') + ')([^>]+)?>(.*?)(<\\\/(' + noWrapP.join('|') + ')>)?)<\\\/p>', 'gms')
 
     newstring = newstring
@@ -1518,7 +1744,7 @@ class Jbbed {
     instance        = this,
     editor          = this.editor,
     previewContainer= this.frame.preview,
-    buttonsIcon     = this.params.buttonsIcon,
+    buttonsIcon     = this.params.barArgs.buttonsIcon,
     previewArgs     = this.params.previewArgs,
     showPreview     = this.params.showPreview,
     buttonAttrs     = [],
@@ -1603,7 +1829,6 @@ class Jbbed {
     /**
    * Get video. Supported Youtube and Rumble
    * @param {string} url
-   * @param {object} params
    */
   buildVid(url) {
 
@@ -1626,7 +1851,7 @@ class Jbbed {
           test_rum    = pattern_rum.test(url);
 
     // yt
-    if (test_yt === true) {
+    if (test_yt === true && typeof paramsYt !== 'undefined' ) {
       
       let code = parse_url.searchParams.get("v");
       if (code == null) {
@@ -1642,7 +1867,7 @@ class Jbbed {
       const attrs = Jbbed.explodeString( paramsYt, '|' ),
             width    = attrs[0],
             height   = attrs[1],
-            nocookie = parseInt( attrs[2] ) === 0 ? '' : '-nocookie',
+            nocookie = Jbbed.intVal( attrs[2] ) === 0 ? '' : '-nocookie',
             src = "https://www.youtube" + nocookie + ".com/embed/" + code + "?controls=1";
 
       iframe =
@@ -1654,7 +1879,9 @@ class Jbbed {
         src +
         '" title="Youtube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
     
-    } else if (test_rum === true) {
+    } 
+    
+    else if (test_rum === true && typeof paramsRu !== 'undefined') {
       
       let code = parse_url.pathname.slice(7, -1);
 
@@ -1672,6 +1899,39 @@ class Jbbed {
     }
 
     this.video = iframe;
+  }
+
+  /**
+   * Compare values
+   * @param {object} obj 
+   * @param {object} defVal 
+   * @param {intval} limit 
+   * @param {boolean} keep 
+   * @param {function} cbk
+   * @returns object
+   */
+  static compare( obj, defVal, limit = -1, keep = false, cbk ) {
+    // compare with default values
+    for( const[key, value] of Object.entries(defVal) ) {
+      if( typeof obj[key] === 'undefined') {
+        obj[key] = value;
+      } else {
+        if( keep === true ) {
+          obj[key] = value.concat(obj[key]);
+        }
+      }
+    }
+  
+    for( const[key, value] of Object.entries(obj) ) {
+      if( typeof value === 'string' ) {
+        obj[key] = Jbbed.explodeString(value, '|', limit, '' );
+      }
+      if( cbk ) {
+        obj[key] = cbk(value, key, defVal);
+      }
+    }
+  
+    return obj;
   }
 
   /**
@@ -1697,17 +1957,18 @@ class Jbbed {
     if( typeof attrs.htmlContent !== 'undefined') el.innerHTML = attrs.htmlContent;
     if( typeof attrs.target !== 'undefined') el.target = attrs.target;
     if( typeof attrs.htmlFor !== 'undefined') el.htmlFor = attrs.htmlFor;
+    if( typeof attrs.rel !== 'undefined') el.rel = attrs.rel;
     if( attrs.async === true ) el.setAttribute('async', '');
 
     if( tag === 'select' && typeof attrs.value === 'object') {
       for( const v in attrs.value ) {
         const option = document.createElement('option');
-        option.value = attrs.value[v] === '--' ? '' : v;
+        option.value = attrs.value[v] == '0' || attrs.value[v] == '--'  ? '' : v;
         option.textContent = attrs.value[v];
         if ( attrs.value[v].toString().indexOf(':') > -1) {
           attrs.value[v] = attrs.value[v].split(":");
           option.textContent = attrs.value[v][0];
-          option.value = attrs.value[v][1];
+          option.value = attrs.value[v][1] === '0' || attrs.value[v] == '--' ? '' : attrs.value[v][1];
         }
         el.appendChild(option)
       }
@@ -1751,55 +2012,24 @@ class Jbbed {
 
   }
 
-  /**
-   * Keep merge values
-   * @param {object} value_1 // custom values or first values
-   * @param {object} value_2 // default values or second values
-   * @returns object array
-   */
-  static keepMerge(value_1, value_2, assign = true) {
-
-    if (assign === true) {
-      value_1 = Object.assign({}, value_2, value_1);
-    }
-   
-    for (const v in value_1) {
-      value_1[v] = Jbbed.explodeString(value_1[v], '|');
-      if (typeof value_2[v] !== "undefined" && value_2[v] !== value_1[v]) {
-        value_1[v] = value_2[v].concat( value_1[v] );
-      }
-    }
-    return value_1;
-  }
-
-  /**
-   * 
-   * @param {mixed} keep 
-   * @param {object|string} value 
-   * @returns 
-   */
-  static selectiveKeep( keep, value ) {
-
-    if( typeof keep === 'string' || typeof keep === 'number' ) {
-      if( typeof kepp === 'string' && keep.indexOf('|') > -1 ) {
-        const tokeep = keep.split('|');
-        for(const v in value ) {
-          if( ! tokeep.includes(v) ) {
-            delete value[v];
-          }
-        }
+ /**
+  * Convert string number in array in integer 
+  * @param {array} arr 
+  * @returns array 
+  */
+static parseIntArr( arr ) {
+	if( Array.isArray(arr) ) {
+    return arr.map(function(v) {
+      const int = v*1;
+      if( ! isNaN(int) ) {
+        return parseInt(v);
       } else {
-        const tokeep = keep;
-        for(const v in value ) {
-          if( tokeep !== parseInt(v) ) {
-            delete value[v];
-          }
-        }
+        return v;
       }
-    }
-    return value;
-
+    });
   } 
+  return arr;
+}
 
   /**
    * Add attributes
@@ -1856,14 +2086,14 @@ class Jbbed {
           d = (Date.now()*Math.random()).toString(36),
           m = Math.random().toString(36);
     let string = m + t + d;
-    if( parseInt( deep ) === 0 ) {
+    if( Jbbed.intVal( deep ) === 0 ) {
     	return string
       	.substring(1, length+2 )
         .replace(/\./g, '');
     } else {
     	let a = []
       let k = string.charCodeAt(0)*s*Math.random();
-    	for( let i = 0; i < parseInt( deep ); i++ ) {
+    	for( let i = 0; i < Jbbed.intVal( deep ); i++ ) {
       	a[i] = randomId(k, length, 0);
       }
       let index = Math.floor(Math.random()*a.length)
@@ -2015,12 +2245,13 @@ class Jbbed {
    * @param {string|array} element 
    * @param {string} sep 
    * @param {number} limit 
+   * @param {mixed} cbkVal
    * @returns mixed array or false
    */
-  static explodeString( element, sep, limit ) {
+  static explodeString( element, sep, limit, cbkVal = [] ) {
     
     if( typeof element === 'string' ) {
-      return element.indexOf(sep) ? Jbbed.cutString( element.trim(), sep, limit ) : [];
+      return element.indexOf(sep) ? Jbbed.cutString( element.trim(), sep, limit ) : cbkVal;
     }
 
     return element;
@@ -2080,6 +2311,25 @@ class Jbbed {
     }
   }
 
+  /**
+   * Convert string number in integer
+   * @param {number} number 
+   * @returns number
+   */
+  static intVal( number ) {
+    number = parseInt(number);
+    if( isNaN( number ) ) {
+      return 0;
+    }
+    return number;
+  }
+
+  /**
+   * 
+   * @param {string} tag 
+   * @param {string} type 
+   * @returns 
+   */
   static getDisplayEl( tag, type = 'block' ) {
     const el = document.createElement(tag);
     el.style.position = 'absolute';

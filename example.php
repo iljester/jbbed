@@ -12,8 +12,7 @@
         margin-bottom: 20px;
     }
 </style>
-<link href="assets/icons/css/jbbicon.css" rel="stylesheet">
-<link href="jbbed.css" rel="stylesheet">
+<link href="jbbed.css" id="jbbed-css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script src="jbbed.js"></script>
 <?php echo jbbed_spoiler(); ?>
@@ -149,6 +148,7 @@ Display a Jsfiddle code:
 </form>
 <script>
 jQuery(function($) {
+    /*
     $(document).on('change', '#change-theme', function() {
         $('.jbbed-container').removeClass('jbbed-classic jbbed-modern jbbed-dark');
         switch( $(this).val() ) {
@@ -156,11 +156,28 @@ jQuery(function($) {
             case 'modern' : $('.jbbed-container').addClass('jbbed-modern'); break;
             case 'dark' : $('.jbbed-container').addClass('jbbed-modern jbbed-dark'); break;
         }
-    });
+    });*/
 
     $('#t').jbbed({
-        theme: 'classic'
+        themeArgs: {
+            style: 'modern',
+            dirUri: 'http://localhost:8888/dybb/',
+        },
+        bars: {
+            3: 'ciao'
+        },
+        select: {
+            ciao: 'a'
+        },
+        jsfPlay: {
+            output: 'css|html'
+        },
+        video: {
+            youtube: '120'
+        }
     });
+
+    
 });
 </script>
 <?php endif; ?>
