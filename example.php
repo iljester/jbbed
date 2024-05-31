@@ -172,8 +172,14 @@ jQuery(function($) {
         jsfPlay: {
             output: 'css|html'
         },
-        video: {
-            youtube: '120'
+        video: {},
+        modal: ['size', 'font'],
+        modalArgs: {
+            keepDefault: false
+        },
+        localizeButtons: {
+            'color' : ['label:Color', '', ''],
+            'h' : ['label:Heads', '', '']
         }
     });
 

@@ -155,19 +155,9 @@ class Jbbed {
     barArgs: {
       keepDefault: false,
       selectiveRemove: ['script', 'iframe'],
-      buttonsIcon: true,
       tiny: false
     },
     single: ['hr', 'img', 'smileys', 'vid', 'jsf'],
-    modal: ['size', 'color', 'font', 'h'],
-    modalArgs: {
-      preview: true,
-      previewSentence: 'The quick brown fox jumps over the lazy dog',
-      previewBgColor: 'theme', // or hex color
-      previewTextColor: 'theme', // or hex color
-      palette: false,
-      keepDefault: true
-    },
     select: {
       size:  ['--:0', 10,12,14,16,18,20,22,24,26,28,30],
       font:  ['--:0', 'Arial', 'Times New Roman', 'Lucida Sans', 'Roboto', 'Monospace', 'Courier', 'Helvetica', 'Georgia'],
@@ -177,26 +167,15 @@ class Jbbed {
               'Red:#ff0000','Orange:#ffa500','Yellow:#ffff00','White:#ffffff'],
       h:     ['--:0', 'H1:1', 'H2:2', 'H3:3', 'H4:4', 'H5:5', 'H6:6']
     },
-    video: {
-      youtube: [560, 315, 0], // width, height, noocookie (1: yes, 0: no)
-      rumble:  [640, 360], // width, height
-    },
     sizeUnit: "px",
-    tagTranslate: {
-      size: ['span', 'style="font-size:$1;"', "[a-zA-Z0-9]+"],
-      font: ['span', 'style="font-family:$1;"', "[a-zA-Z0-9\\s]+"],
-      color:['span', 'style="color:$1;"', "[a-fA-F0-9#]+"],
-      link: ['a', 'href="$1"', "[^<>\\]\\[\\s]+"],
-      img:  ['img', 'src="$1"', "[^<>\\s]+"],
-      b:    ['strong', ''],
-      i:    ['em', '', ''],
-      quote: ['blockquote', '', ''],
-      code: ['pre', '', ''],
-      aligncenter: ['p', 'style="text-align:center;"', ''],
-      alignleft: ['p', 'style="text-align:left;"', ''],
-      alignright: ['p', 'style="text-align:right;"', ''],
-      alignjustify: ['p', 'style="text-align:justify;"', ''],
-      spoiler: ['div', 'style="display:none"', '']
+    modal: ['size', 'color', 'font', 'h'],
+    modalArgs: {
+      preview: true,
+      previewSentence: 'The quick brown fox jumps over the lazy dog',
+      previewBgColor: 'theme', // or hex color
+      previewTextColor: 'theme', // or hex color
+      palette: false,
+      keepDefault: true
     },
     textareaArgs: {
       font: "monospace",
@@ -224,40 +203,59 @@ class Jbbed {
       output: 'all', // html|css|js|result or all
       theme: 'dark' // dark or ''
     },
+    video: {
+      youtube: [560, 315, 0], // width, height, noocookie (1: yes, 0: no)
+      rumble:  [640, 360], // width, height
+    },
+    tagTranslate: {
+      size: ['span', 'style="font-size:$1;"', "[a-zA-Z0-9]+"],
+      font: ['span', 'style="font-family:$1;"', "[a-zA-Z0-9\\s]+"],
+      color:['span', 'style="color:$1;"', "[a-fA-F0-9#]+"],
+      link: ['a', 'href="$1"', "[^<>\\]\\[\\s]+"],
+      img:  ['img', 'src="$1"', "[^<>\\s]+"],
+      b:    ['strong', ''],
+      i:    ['em', '', ''],
+      quote: ['blockquote', '', ''],
+      code: ['pre', '', ''],
+      aligncenter: ['p', 'style="text-align:center;"', ''],
+      alignleft: ['p', 'style="text-align:left;"', ''],
+      alignright: ['p', 'style="text-align:right;"', ''],
+      alignjustify: ['p', 'style="text-align:justify;"', ''],
+      spoiler: ['div', 'style="display:none"', '']
+    },
     smileys: true,
     fullscreen: true,
-    showPreview: true,
     localizeButtons: {
-      b:            ['label:B', 'title:Bold', 'className:jbbicon-b jbbicon'],
-      i:            ['label:I', 'title:Italic', 'className:jbbicon-i jbbicon'],
-      u:            ['label:U', 'title:Underline', 'className:jbbicon-u jbbicon'],
-      s:            ['label:S', 'title:Strike', 'className:jbbicon-s2 jbbicon'],
-      link:         ['label:Link', 'title:Link', 'className:jbbicon-link jbbicon'],
-      img:          ['label:Img', 'title:Image', 'className:jbbicon-img jbbicon'],
-      vid:          ['label:Video', 'title:Video', 'className:jbbicon-vid jbbicon'],
-      ul:           ['label:UL', 'title:Unordered List', 'className:jbbicon-ul jbbicon'],
-      ol:           ['label:OL', 'title:Ordered List', 'className:jbbicon-ol jbbicon'],
-      li:           ['label:Li', 'title:List Item', 'className:jbbicon-li jbbicon'],
-      code:         ['label:Code', 'title:Code', 'className:jbbicon-code jbbicon'],
-      quote:        ['label:Cite', 'title:Cite', 'className:jbbicon-quote jbbicon'],
-      clear:        ['label:Trash', 'title:Trash', 'className:jbbicon-trash jbbicon'],
-      hr:           ['label:Line', 'title:Line', 'className:jbbicon-hr jbbicon'],
-      aligncenter:  ['label:AlignCenter', 'title:Align Center', 'className:jbbicon-aligncenter jbbicon'],
-      alignleft:    ['label:AlignLeft', 'title:Align Left', 'className:jbbicon-alignleft jbbicon'],
-      alignright:   ['label:AlignRight', 'title:Align Right', 'className:jbbicon-alignright jbbicon'],
-      alignjustify: ['label:AlignJustify', 'title:Align Justify', 'className:jbbicon-alignjustify jbbicon'],
-      size:         ['label:Size', 'title:Size', 'className:jbbicon-size jbbicon'],
-      font:         ['label:Font', 'title:Font', 'className:jbbicon-font1 jbbicon'],
-      h:            ['label:Head', 'title:Head', 'className:jbbicon-head jbbicon'],
-      color:        ['label:Color', 'title:Color', 'className:jbbicon-palette3 jbbicon'],
-      edit:         ['label:Edit', 'title:Edit', 'className:jbbicon-edit jbbicon'],
-      preview:      ['label:Preview', 'title:Preview', 'className:jbbicon-preview jbbicon'],
-      ok:           ['label:OK', 'title:Ok', 'className:jbbicon-check jbbicon'],
-      no:           ['label:NO', 'title:No', 'className:jbbicon-close jbbicon'],
-      smileys:      ['label:Smileys', 'title:Smileys', 'className:jbbicon-emoticon jbbicon'],
-      spoiler:      ['label:Spoiler', 'title:Spoiler', 'className:jbbicon-spoiler jbbicon'],
-      jsf:          ['label:JsFiddle', 'title:JsFiddle', 'className:jbbicon-jsf jbbicon'],
-      fullscreen:   ['label:Fullscreen', 'title:Fullscreen', 'className:jbbicon-fullscreen jbbicon']
+      b:            ['label:_B', 'title:Bold', 'className:jbbicon-b jbbicon'],
+      i:            ['label:_I', 'title:Italic', 'className:jbbicon-i jbbicon'],
+      u:            ['label:_U', 'title:Underline', 'className:jbbicon-u jbbicon'],
+      s:            ['label:_S', 'title:Strike', 'className:jbbicon-s2 jbbicon'],
+      link:         ['label:_Link', 'title:Link', 'className:jbbicon-link jbbicon'],
+      img:          ['label:_Img', 'title:Image', 'className:jbbicon-img jbbicon'],
+      vid:          ['label:_Video', 'title:Video', 'className:jbbicon-vid jbbicon'],
+      ul:           ['label:_UL', 'title:Unordered List', 'className:jbbicon-ul jbbicon'],
+      ol:           ['label:_OL', 'title:Ordered List', 'className:jbbicon-ol jbbicon'],
+      li:           ['label:_Li', 'title:List Item', 'className:jbbicon-li jbbicon'],
+      code:         ['label:_Code', 'title:Code', 'className:jbbicon-code jbbicon'],
+      quote:        ['label:_Cite', 'title:Cite', 'className:jbbicon-quote jbbicon'],
+      clear:        ['label:_Trash', 'title:Trash', 'className:jbbicon-trash jbbicon'],
+      hr:           ['label:_Line', 'title:Line', 'className:jbbicon-hr jbbicon'],
+      aligncenter:  ['label:_AlignCenter', 'title:Align Center', 'className:jbbicon-aligncenter jbbicon'],
+      alignleft:    ['label:_AlignLeft', 'title:Align Left', 'className:jbbicon-alignleft jbbicon'],
+      alignright:   ['label:_AlignRight', 'title:Align Right', 'className:jbbicon-alignright jbbicon'],
+      alignjustify: ['label:_AlignJustify', 'title:Align Justify', 'className:jbbicon-alignjustify jbbicon'],
+      size:         ['label:_Size', 'title:Size', 'className:jbbicon-size jbbicon'],
+      font:         ['label:_Font', 'title:Font', 'className:jbbicon-font1 jbbicon'],
+      h:            ['label:_Head', 'title:Head', 'className:jbbicon-head jbbicon'],
+      color:        ['label:_Color', 'title:Color', 'className:jbbicon-palette3 jbbicon'],
+      edit:         ['label:_Edit', 'title:Edit', 'className:jbbicon-edit jbbicon'],
+      preview:      ['label:_Preview', 'title:Preview', 'className:jbbicon-preview jbbicon'],
+      ok:           ['label:_OK', 'title:Ok', 'className:jbbicon-check jbbicon'],
+      no:           ['label:_NO', 'title:No', 'className:jbbicon-close jbbicon'],
+      smileys:      ['label:_Smileys', 'title:Smileys', 'className:jbbicon-emoticon jbbicon'],
+      spoiler:      ['label:_Spoiler', 'title:Spoiler', 'className:jbbicon-spoiler jbbicon'],
+      jsf:          ['label:_JsFiddle', 'title:JsFiddle', 'className:jbbicon-jsf jbbicon'],
+      fullscreen:   ['label:_Fullscreen', 'title:Fullscreen', 'className:jbbicon-fullscreen jbbicon']
 
     },
     localizeMessages: {
@@ -404,7 +402,7 @@ class Jbbed {
     // parse barsArgs (*)
     params.barArgs = Jbbed.compare(params.barArgs, defaults.barArgs, -1, false, (v, k, d) => {
       switch( k ) {
-        case 'keepDefault' || 'buttonsIcon' || 'tiny' : 
+        case 'keepDefault' || 'tiny' : 
           v = Boolean(v); 
           break;
         case 'selectiveRemove' : 
@@ -534,6 +532,7 @@ class Jbbed {
           if( typeof v !== 'string') {
             v = d[k];
           }
+          break;
       }
       return v;
     });
@@ -555,6 +554,10 @@ class Jbbed {
           if( typeof v !== 'string') {
             v = d[k];
           }
+          break;
+        case 'show' :
+          v = Boolean(v);
+          break;
       }
       return v;
     });
@@ -598,9 +601,6 @@ class Jbbed {
 
     // parse fullscreen
     params.fullscreen = Boolean(params.fullscreen);
-
-    // parse showPreview
-    params.showPreview = Boolean(params.showPreview);
 
     // parse localizeButtons (*)
     params.localizeButtons = Jbbed.compare(params.localizeButtons, defaults.localizeButtons, 2, false, (v, k, d) => {
@@ -710,10 +710,14 @@ class Jbbed {
     }
 
     let buttonAttrs = {};
+    let fb = ['label', 'title', 'className']
     for( const s in thisButton ) {
       if( thisButton[s].indexOf(':') > -1 ) {
         const v = thisButton[s].split(':', 2);
         buttonAttrs[v[0]] = v[1];
+      } else {
+        // fallback
+        buttonAttrs[fb[s]] = '';
       }
     }
 
@@ -737,7 +741,6 @@ class Jbbed {
     modalArgs        = this.params.modalArgs,
     localizeButtons  = this.params.localizeButtons,
     localizeMessages = this.params.localizeMessages,
-    buttonsIcon      = this.params.barArgs.buttonsIcon,
     sizeUnit         = this.params.sizeUnit,
     smileys          = this.params.smileys,
     video            = this.params.video,
@@ -854,8 +857,9 @@ class Jbbed {
         case 1 : t = 'no'; break;
       }
       this.localizeButtons(t);
+
       buttonAttrs[i]  = this.buttonLocalized;
-      label[i]        = buttonsIcon === true ? '' : buttonAttrs[i].label;
+      label[i]        = buttonAttrs[i].label.length > 0 ? Jbbed.underscore( buttonAttrs[i].label ) : t.toUpperCase();
       customClass[i]  = buttonAttrs[i].className.length > 0 ? ' ' + buttonAttrs[i].className : '';
       title[i]        = buttonAttrs[i].title.length > 0 ? buttonAttrs[i].title : '';
     }
@@ -951,7 +955,7 @@ class Jbbed {
         const labelSelect = Jbbed.createElement(
           'label', 
           {
-            textContent: localizeButtons[dataButton][0].split(':')[1],
+            textContent: localizeButtons[dataButton][0].split(':')[1].replace(/^_/, ''),
             cls: 'dialog-label-sel-' + ID + ' jbbed-dialog-label-sel ' + jbbedD ,
             htmlFor: dataButton + '-select-' + ID
           }
@@ -980,6 +984,7 @@ class Jbbed {
                     return false;
                   }
                   
+                  value = dataButton === 'h' ? 'h' + value : value;
                   $('#' + previewContainer.id).text('');
                   let wrap = Jbbed.createElement(
                     value
@@ -1137,8 +1142,7 @@ class Jbbed {
     inselect        = Object.getOwnPropertyNames(this.params.select),
     select          = this.params.select,
     allowed         = this.allowed,
-    buttonsIcon     = this.params.barArgs.buttonsIcon,
-    smileys           = this.params.smileys,
+    smileys         = this.params.smileys,
     modal           = this.params.modal,
     btnsContainer   = this.frame.buttons,
     separator       = '#';
@@ -1182,8 +1186,9 @@ class Jbbed {
         }
        
         this.localizeButtons(buttons[b]);
+
         const buttonAttrs = this.buttonLocalized,
-              label       = buttonsIcon === true ? '' : buttonAttrs.label,
+              label       = buttonAttrs.label.length > 0 ? Jbbed.underscore(buttonAttrs.label) : buttons[b],
               customClass = buttonAttrs.className.length > 0 ? ' ' + buttonAttrs.className : '',
               title       = buttonAttrs.title.length > 0 ? buttonAttrs.title : '';
         
@@ -1195,7 +1200,7 @@ class Jbbed {
             'label', { 
               cls : 'jbbed-label' + customClass,
                // In this case it is better that the drop down selector has a label
-              textContent : buttonAttrs.label
+              textContent : label
             }
           ),
           elSelect = Jbbed.createElement(
@@ -1268,17 +1273,16 @@ class Jbbed {
     mainContainer       = this.frame.main,
     previewContainer    = this.frame.preview,
     editor              = this.editor[0],
-    buttonsIcon         = this.params.barArgs.buttonsIcon,
     tabContainer        = this.frame.tab,
     fsButton            = 'fullscreen',
-    noShowPrev          = this.params.showPreview === false ? ' no-show-preview' : '',
+    noShowPrev          = this.params.previewArgs.show === false ? ' no-show-preview' : '',
     textareaArgsH       = this.params.textareaArgs.height,
     previewArgsH        = this.params.previewArgs.height;
     
     this.localizeButtons(fsButton);
     const
     buttonAttrs      = this.buttonLocalized,
-    label            = buttonsIcon === true ? '' : buttonAttrs.label,
+    label            = buttonAttrs.label.length > 0 ? Jbbed.underscore(buttonAttrs.label) : 'Fullscreen',
     customClass      = buttonAttrs.className.length > 0 ? ' ' + buttonAttrs.className : '',
     title            = buttonAttrs.title.length > 0 ? buttonAttrs.title : '';
 
@@ -1744,9 +1748,8 @@ class Jbbed {
     instance        = this,
     editor          = this.editor,
     previewContainer= this.frame.preview,
-    buttonsIcon     = this.params.barArgs.buttonsIcon,
     previewArgs     = this.params.previewArgs,
-    showPreview     = this.params.showPreview,
+    showPreview     = this.params.previewArgs.show,
     buttonAttrs     = [],
     label           = [],
     customClass     = [],
@@ -1768,10 +1771,11 @@ class Jbbed {
         case 'edit'       : a = ' active jbbed-tab-edit ' + tabbedID; break;
         case 'preview'    : a = ' jbbed-tab-preview ' + tabbedID; break;
       }
-      
+
+      let defaultLabel = tabButtons[b].substring(0, 1).toUpperCase() + tabButtons[b].substring(1);
       this.localizeButtons(tabButtons[b]);
       buttonAttrs[b] = this.buttonLocalized;
-      label[b]       = ( buttonsIcon === true ? '' : buttonAttrs[b].label);
+      label[b]       = buttonAttrs[b].label.length > 0 ? Jbbed.underscore(buttonAttrs[b].label) : defaultLabel;
       customClass[b] = buttonAttrs[b].className.length > 0 ? ' ' + buttonAttrs[b].className : '';
       title[b]       = buttonAttrs[b].title.length > 0 ? buttonAttrs[b].title : '';
 
@@ -2341,6 +2345,18 @@ static parseIntArr( arr ) {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Hide or show text if contains or not underscore at start
+   * @param {string} string 
+   * @returns string
+   */
+  static underscore( string ) {
+    if( string.indexOf('_') === 0 ) {
+      return '';
+    }
+    return string;
   }
 
 } // end class
