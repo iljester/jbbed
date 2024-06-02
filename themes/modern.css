@@ -1,40 +1,40 @@
-.jbbed-container {
+.jbbed-container.jbbed-modern {
     background-color: #fff;
     border: 1px solid #ddd;
 }
 
-.jbbed-editor, 
-.jbbed-preview {
+.jbbed-modern .jbbed-editor, 
+.jbbed-modern .jbbed-preview {
     background-color: #ffffff;
     border: 1px solid #ccc;
 }
 
-.jbbed-bar {
+.jbbed-modern .jbbed-bar {
     border-bottom: 1px solid #ddd;
 }
 
-.jbbed-button,
-.jbbed-modal,
-.jbbed-button.jbbed-smileys {
+.jbbed-modern .jbbed-button,
+.jbbed-modern .jbbed-modal,
+.jbbed-modern .jbbed-button.jbbed-smileys {
   border: 0 none;
   background-color: transparent;
 }
 
-.jbbed-button:hover,
-.jbbed-modal:hover,
-.jbbed-button.jbbed-smileys:hover {
+.jbbed-modern .jbbed-button:hover,
+.jbbed-modern .jbbed-modal:hover,
+.jbbed-modern .jbbed-button.jbbed-smileys:hover {
   background-color: #eee;
 }
 
-.jbbed-button-select {
+.jbbed-modern .jbbed-button-select {
     border: 1px solid #ccc;
 }
 
-.jbbed-button-select {
+.jbbed-modern .jbbed-button-select {
     border-radius: 2px;
 }
 
-.jbbed-button:hover {
+.jbbed-modern .jbbed-button:hover {
     border-color: #000;
 }
 
@@ -54,19 +54,21 @@
     content: "\e822"
 }
 
-.jbbed-sep:before {
+.jbbed-modern .jbbed-sep:before {
     border-left: .5px solid #c4c4c4; 
     border-right: .5px solid #c4c4c4;
 }
 
-.jbbed-wrapper-tab {
+.jbbed-modern .jbbed-wrapper-tab {
     background-color: transparent;
     border: 0 none; 
+    padding-left: 0;
+    padding-right: 0;
 }
 
-.jbbed-tab-editor li,
-.jbbed-tab-editor li.active,
-.jbbed-fullscreen-button {
+.jbbed-modern .jbbed-tab-editor li,
+.jbbed-modern .jbbed-tab-editor li.active,
+.jbbed-modern .jbbed-fullscreen-button {
   border: 1px solid #ddd;
   padding: 5px 10px;
   border-radius: 4px;
@@ -75,13 +77,13 @@
   background-color: transparent;
 }
 
-.jbbed-tab-editor li.active,
-.jbbed-fullscreen-button.fullscreen-active {
+.jbbed-modern .jbbed-tab-editor li.active,
+.jbbed-modern .jbbed-fullscreen-button.fullscreen-active {
   background-color: #000;
   color: #fff;
 }
 
-.jbbed-dialog {
+.jbbed-modern .jbbed-dialog {
     background-color: #ffffff;
     border-color: #ddd;
     color: #6e6e6e;
@@ -89,99 +91,99 @@
     box-shadow: 0 11px 11px 4px #00000017;
 }
 
-.jbbed-dialog-preview {
+.jbbed-modern .jbbed-dialog-preview {
     background-color: #fff;
     color: #000;
     border: 1px solid #ddd;
 }
 
-.jbbed-color {
+.jbbed-modern .jbbed-color {
     border: 1px solid #888;
 }
 
-.jbbed-color:hover {
+.jbbed-modern .jbbed-color:hover {
     border-color: #000;
 }
 
-.jbbed-color.checked::before {
+.jbbed-modern .jbbed-color.checked::before {
     text-shadow: 0 0 1px #000;
     color: #fff;
 }
 
-.jbbed-del {
+.jbbed-modern .jbbed-del {
     background-color: transparent;
 }
 
-.jbbed-del:before,
-.jbbed-del:after {
+.jbbed-modern .jbbed-del:before,
+.jbbed-modern .jbbed-del:after {
   background-color: #feac16;
   border: 1px solid #5a5a5a;
 }
 
-.jbbed-del:before {
+.jbbed-modern .jbbed-del:before {
     text-shadow: 1px 0px 1px #000;
     color: #000;
 }
 
-.jbbed-ok, 
-.jbbed-no {
+.jbbed-modern .jbbed-ok, 
+.jbbed-modern .jbbed-no {
   background-color: #eee; 
   border: 1px solid #8f8f8f; 
 }
 
-.jbbed-ok, 
-.jbbed-no {
+.jbbed-modern .jbbed-ok, 
+.jbbed-modern .jbbed-no {
   background-color: #eee; 
   border: 1px solid #8f8f8f; 
 }
 
-.jbbed-ok {
+.jbbed-modern .jbbed-ok {
     color: green;
 }
 
-.jbbed-ok:hover {
+.jbbed-modern .jbbed-ok:hover {
     border-color: green;
 }
 
-.jbbed-no {
+.jbbed-modern .jbbed-no {
     color: red;
 }
 
-.jbbed-no:hover {
+.jbbed-modern .jbbed-no:hover {
     border-color: red;
 }
 
-.jbbed-spoiler-container {
+.jbbed-modern .jbbed-spoiler-container {
     border: 1px dashed #acacac;
     background-color: #eee;
 }
   
-.jbbed-spoiler-container div {
+.jbbed-modern .jbbed-spoiler-container div {
     background-color: #fff;
 }
 
-.jbbed-spoiler-container button {
+.jbbed-modern .jbbed-spoiler-container button {
     background-color: #d14b4b;
     border: 1px solid #474747; 
     color: #fff;
 }
 
-.jbbed-preview pre {
+.jbbed-modern .jbbed-preview pre {
     background-color: #e0ffe0; 
     color: #086208;
     border-left: 4px solid green;
 }
 
-.jbbed-preview pre li {
+.jbbed-modern .jbbed-preview pre li {
     border-bottom: 1px solid #9ed89e63;
 }
 
-.jbbed-preview blockquote {
+.jbbed-modern .jbbed-preview blockquote {
     border-left: 4px solid #9c9c9c;
     background-color: #00000038;
 }
 
-.jsfiddle-snippet {
+.jbbed-modern .jsfiddle-snippet {
     background-color: #eee;
     box-shadow: 0px 10px 8px -4px #0000006b;
 }

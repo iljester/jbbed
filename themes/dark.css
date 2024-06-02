@@ -1,76 +1,78 @@
-.jbbed-container {
+.jbbed-container.jbbed-dark {
     background-color: #262626;
     border: 1px solid #888;
 }
 
-.jbbed-editor,
-.jbbed-preview {
+.jbbed-dark .jbbed-editor,
+.jbbed-dark .jbbed-preview {
     background-color: #ffffff24;
     border: 1px solid #4d4d4d;
     color: #ebebeb;
 }
 
-.jbbed-bar {
+.jbbed-dark .jbbed-bar {
     border-bottom: 1px solid #484848;
 }
 
-.jbbed-button,
-.jbbed-modal,
-.jbbed-button.jbbed-smileys {
+.jbbed-dark .jbbed-button,
+.jbbed-dark .jbbed-modal,
+.jbbed-dark .jbbed-button.jbbed-smileys {
     border: 0 none;
     background-color: transparent;
 }
 
-.jbbed-button,
-.jbbed-modal,
-.jbbed-label {
+.jbbed-dark .jbbed-button,
+.jbbed-dark .jbbed-modal,
+.jbbed-dark .jbbed-label {
     color: #828282;
 }
 
-.jbbed-button:hover,
-.jbbed-modal:hover,
-.jbbed-button.jbbed-smileys:hover {
+.jbbed-dark .jbbed-button:hover,
+.jbbed-dark .jbbed-modal:hover,
+.jbbed-dark .jbbed-button.jbbed-smileys:hover {
     background-color: #ffffff2a;
 }
 
-.jbbed-button-select {
+.jbbed-dark .jbbed-button-select {
     border: 0 none;
     border-radius: 2px;
 }
 
-.jbbed-button:hover {
+.jbbed-dark .jbbed-button:hover {
     border-color: #000;
 }
 
-.jbbicon-b:before {
+.jbbed-dark .jbbicon-b:before {
     content: "\e812"
 }
 
-.jbbicon-i:before {
+.jbbed-dark .jbbicon-i:before {
     content: "\e814"
 }
 
-.jbbicon-u:before {
+.jbbed-dark .jbbicon-u:before {
     content: "\e813"
 }
 
-.jbbicon-s2:before {
+.jbbed-dark .jbbicon-s2:before {
     content: "\e822"
 }
 
-.jbbed-sep:before {
+.jbbed-dark .jbbed-sep:before {
     border-left: .5px solid #ffffff54;
     border-right: .5px solid #ffffff54;
 }
 
-.jbbed-wrapper-tab {
+.jbbed-dark .jbbed-wrapper-tab {
     background-color: transparent;
     border: 0 none; 
+    padding-left: 0;
+    padding-right: 0;
 }
 
-.jbbed-tab-editor li,
-.jbbed-tab-editor li.active,
-.jbbed-fullscreen-button {
+.jbbed-dark .jbbed-tab-editor li,
+.jbbed-dark .jbbed-tab-editor li.active,
+.jbbed-dark .jbbed-fullscreen-button {
   border: 1px solid #ddd;
   padding: 5px 10px;
   border-radius: 4px;
@@ -80,112 +82,112 @@
   color: #c7c7c7;
 }
 
-.jbbed-tab-editor li.active,
-.jbbed-fullscreen-button.fullscreen-active {
+.jbbed-dark .jbbed-tab-editor li.active,
+.jbbed-dark .jbbed-fullscreen-button.fullscreen-active {
   background-color: #ffffff3b;
   color: #c5c5c5;
 }
 
-.jbbed-dialog {
+.jbbed-dark .jbbed-dialog {
     background-color: #262626;
     border-color: #484848;
     color: #6e6e6e;
     box-shadow: 0 11px 11px 4px #00000017;
 }
 
-.jbbed-dialog-preview {
+.jbbed-dark .jbbed-dialog-preview {
     border-color: #000;
     background-color: rgb(69 69 69);
     color: rgb(235 235 235);
 }
 
-.jbbed-color {
+.jbbed-dark .jbbed-color {
     border: 1px solid #888;
 }
 
-.jbbed-color:hover {
+.jbbed-dark .jbbed-color:hover {
     border-color: #000;
 }
 
-.jbbed-color.checked::before {
+.jbbed-dark .jbbed-color.checked::before {
     text-shadow: 0 0 1px #000;
     color: #fff;
 }
 
-.jbbed-del {
+.jbbed-dark .jbbed-del {
     background-color: transparent;
 }
 
-.jbbed-del:before,
-.jbbed-del:after {
+.jbbed-dark .jbbed-del:before,
+.jbbed-dark .jbbed-del:after {
   background-color: #feac16;
   border: 1px solid #5a5a5a;
 }
 
-.jbbed-del:before {
+.jbbed-dark .jbbed-del:before {
     text-shadow: 1px 0px 1px #000;
     color: #000;
 }
 
-.jbbed-ok, 
-.jbbed-no {
+.jbbed-dark .jbbed-ok, 
+.jbbed-dark .jbbed-no {
   background-color: #111111;
   border: 1px solid #8f8f8f; 
 }
 
-.jbbed-ok, 
-.jbbed-no {
+.jbbed-dark .jbbed-ok, 
+.jbbed-dark .jbbed-no {
   background-color: #eee; 
   border: 1px solid #8f8f8f; 
 }
 
-.jbbed-ok {
+.jbbed-dark .jbbed-ok {
     color: green;
 }
 
-.jbbed-ok:hover {
+.jbbed-dark .jbbed-ok:hover {
     border-color: green;
 }
 
-.jbbed-no {
+.jbbed-dark .jbbed-no {
     color: red;
 }
 
-.jbbed-no:hover {
+.jbbed-dark .jbbed-no:hover {
     border-color: red;
 }
 
-.jbbed-spoiler-container {
+.jbbed-dark .jbbed-spoiler-container {
     background-color: #333131;
     border: 1px solid #747474;
 }
 
-.jbbed-spoiler-container div {
+.jbbed-dark .jbbed-spoiler-container div {
     background-color: #454545;
 }
 
-.jbbed-spoiler-container button {
+.jbbed-dark .jbbed-spoiler-container button {
     background-color: #d14b4b;
     border: 1px solid #474747; 
     color: #fff;
 }
 
-.jbbed-preview pre {
+.jbbed-dark .jbbed-preview pre {
     background-color: #e0ffe0; 
     color: #086208;
     border-left: 4px solid green;
 }
 
-.jbbed-preview pre li {
+.jbbed-dark .jbbed-preview pre li {
     border-bottom: 1px solid #9ed89e63;
 }
 
-.jbbed-preview blockquote {
+.jbbed-dark .jbbed-preview blockquote {
     border-left: 4px solid #9c9c9c;
     background-color: #00000038;
 }
 
-.jsfiddle-snippet {
+.jbbed-dark .jsfiddle-snippet {
     background-color: #eee;
     box-shadow: 0px 10px 8px -4px #0000006b;
 }

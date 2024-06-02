@@ -12,7 +12,11 @@
         margin-bottom: 20px;
     }
 </style>
-<link href="jbbed.css" id="jbbed-css" rel="stylesheet">
+<link href="themes/icons/jbbicon/css/jbbicon.css" rel="stylesheet">
+<link href="jbbed.css" rel="stylesheet">
+<link href="themes/classic.css" rel="stylesheet">
+<link href="themes/modern.css" rel="stylesheet">
+<link href="themes/dark.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script src="jbbed.js"></script>
 <?php echo jbbed_spoiler(); ?>
@@ -20,8 +24,10 @@
 <body>
 <div id="page" class="page">
 <?php if( filter_has_var(INPUT_POST, 'jbbed') && strlen($_POST['jbbed']) > 0 ) : ?>
-<div class="jbbed-preview">
-    <?php echo jbbed_convert( $_POST['jbbed'] ); ?>
+<div class="jbbed-classic">
+    <div class="jbbed-preview">
+        <?php echo jbbed_convert( $_POST['jbbed'] ); ?>
+    </div>
 </div>
 <?php else: ?>
 <div class="change-theme">
@@ -148,40 +154,17 @@ Display a Jsfiddle code:
 </form>
 <script>
 jQuery(function($) {
-    /*
+
     $(document).on('change', '#change-theme', function() {
         $('.jbbed-container').removeClass('jbbed-classic jbbed-modern jbbed-dark');
         switch( $(this).val() ) {
             case 'classic' : $('.jbbed-container').addClass('jbbed-classic'); break;
             case 'modern' : $('.jbbed-container').addClass('jbbed-modern'); break;
-            case 'dark' : $('.jbbed-container').addClass('jbbed-modern jbbed-dark'); break;
-        }
-    });*/
-
-    $('#t').jbbed({
-        themeArgs: {
-            style: 'modern',
-            dirUri: 'http://localhost:8888/dybb/',
-        },
-        bars: {
-            3: 'ciao'
-        },
-        select: {
-            ciao: 'a'
-        },
-        jsfPlay: {
-            output: 'css|html'
-        },
-        video: {},
-        modal: ['size', 'font'],
-        modalArgs: {
-            keepDefault: false
-        },
-        localizeButtons: {
-            'color' : ['label:Color', '', ''],
-            'h' : ['label:Heads', '', '']
+            case 'dark' : $('.jbbed-container').addClass('jbbed-dark'); break;
         }
     });
+
+    $('#t').jbbed();
 
     
 });

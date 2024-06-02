@@ -9,6 +9,10 @@
 
 (function ( $ ) {
 
+  /**
+   * Jbbed for multi-instances
+   * @param {object} params 
+   */
   $.fn.jbbedMu = function (params = {}) {
     $(this).each(function() {
       params.editorID = Jbbed.randomId(Math.random(), 5);
@@ -16,6 +20,10 @@
     });
   }
 
+  /**
+   * Jbbed 
+   * @param {object} params 
+   */
   $.fn.jbbed = function (params = {}) {
 
     // add class to textarea
@@ -44,13 +52,15 @@
           mainContainer    = frame.main,
           previewContainer = frame.preview,
           buttonsContainer = frame.buttons;
+  
+    // insert mainContainer
+    $(mainContainer).insertBefore(this);
+
+    // append textarea to mainContainer
+    $(mainContainer).append(this);
 
     // add buttons container
     $(buttonsContainer).insertBefore(this);
-
-    // add wrap container
-    $(this).prev().wrap(mainContainer); // wrap buttons into mainContainer
-    $(this).prev().append(this); // append editor textarea
 
     // set theme style
     if( false !== inst.params.themeArgs.style ) {
@@ -67,13 +77,13 @@
     // insert preview after textarea
     $(previewContainer).insertAfter(this);
 
-    // get buttons frame
+    // get buttons
     inst.buttons();
 
-    // get fullscreen frame
+    // get fullscreen
     inst.fullscreen();
 
-    // get preview frame;
+    // get preview
     inst.preview();
 
     // do BBCode
@@ -145,7 +155,7 @@ class Jbbed {
     editorID: '',
     themeArgs: {
       style: 'classic',
-      icons: true,
+      icons: 'jbbicon/css/jbbicon',
       dirUri: '',
     },
     bars: {
@@ -208,7 +218,7 @@ class Jbbed {
       rumble:  [640, 360], // width, height
     },
     tagTranslate: {
-      size: ['span', 'style="font-size:$1;"', "[a-zA-Z0-9]+"],
+      size: ['span', 'style="font-size:$1;"', "[0-9]+(px|em|rem|pt|%)"],
       font: ['span', 'style="font-family:$1;"', "[a-zA-Z0-9\\s]+"],
       color:['span', 'style="color:$1;"', "[a-fA-F0-9#]+"],
       link: ['a', 'href="$1"', "[^<>\\]\\[\\s]+"],
@@ -270,7 +280,7 @@ class Jbbed {
   /**
    * The tiny bar 
    */
-  static tinyBar = ['b', 'i', 'link', 'img', 'ul', 'ol', 'li', 'quote', 'hr', 'spoiler'];
+  static tinyBar = ['b', 'i', 'link', 'img', 'ul', 'ol', 'li', 'quote', 'hr', 'spoiler', 'clear'];
 
   /**
    * Size unit
@@ -292,6 +302,7 @@ class Jbbed {
     // parse values
     this.parseValues();
 
+    // setup editorID
     this.ID = this.params.editorID;
 
     // frames
@@ -386,11 +397,8 @@ class Jbbed {
     // parse themeArgs (*)
     params.themeArgs = Jbbed.compare(params.themeArgs, defaults.themeArgs, -1, false, (v, k, d) => {
       switch( k ) {
-        case 'style' : 
+        case 'style' || 'icons' : 
           v = v !== false && /[a-z0-9_-]+/gi.test(v) === false ? d[k] : v;
-          break;
-        case 'icons' :
-          v = Boolean(v);
           break;
         case 'dirUri' : 
           v = /[^<>\?=&#]+/gi.test(v) === false ? d[k] : v;
@@ -582,7 +590,7 @@ class Jbbed {
         return v;
     });
 
-    // add class to spoiler arg if not exists (*)
+    // add class to spoiler if not exists (*)
     if( params.spoilerArgs.className.length === 0 ) {
       params.tagTranslate.spoiler[1] = params.tagTranslate.spoiler[1] + ' class="' + params.editorID + '-spoiler' + '"';
       params.spoilerArgs.className = params.editorID + '-spoiler';
@@ -640,7 +648,7 @@ class Jbbed {
           element = Jbbed.createElement(
             'link',
             {
-              href: dirUri + 'themes/' + 'jbbed-' + theme + '.css',
+              href: dirUri + 'themes/' + theme + '.css',
               rel: 'stylesheet'
             }
           );
@@ -662,7 +670,7 @@ class Jbbed {
           element = Jbbed.createElement(
             'link',
             {
-              href: dirUri + 'themes/icons/css/jbbicon.css',
+              href: dirUri + 'themes/icons/' + icons + '.css',
               rel: 'stylesheet'
             }
           );

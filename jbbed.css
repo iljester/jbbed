@@ -194,7 +194,6 @@
 }
 
 .jbbed-tab-editor li.active {
-	border-bottom: 0;
 	padding-bottom: 10px;
 }
 
@@ -434,6 +433,7 @@
 
 .jbbed-preview blockquote {
   padding: 10px;
+  margin-left: 0;
 }
 
 .jbbed-preview ul, 
