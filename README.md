@@ -11,6 +11,20 @@ A beta version is currently being released not for production purposes but for t
 
 ### Basic Usage
 
+```html
+<!-- optional with autoload // see documentation -->
+<link src="themes/icons/jbbicon/css/jbbicon.css" rel="stylesheet">
+<!-- required -->
+<link src="jbbed.css" rel="stylesheet">
+<!-- optional with autoload // see documentation -->
+<link src="themes/classic.css" rel="stylesheet">
+
+<!-- required -->
+<script src="jquery.min.js"></script>
+<script src="jbbed.min.js"></script>
+```
+
+
 ```js
 $('#mytextarea').jbbed();
 ```
@@ -27,7 +41,7 @@ echo jbbed_convert( $string );
 ```
 ### Params
 
-For params, please see class Jbbed and/or instructions [on my site](https://www.iljester.com/portfolio/jbbed-editor/).
+For documentations, please instructions [on my site](https://www.iljester.com/guide/jbbed-editor/).
 
 ### Demo link
 

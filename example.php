@@ -18,7 +18,7 @@
 <link href="themes/modern.css" rel="stylesheet">
 <link href="themes/dark.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-<script src="jbbed.js"></script>
+<script src="jbbed.min.js"></script>
 <?php echo jbbed_spoiler(); ?>
 </head>
 <body>

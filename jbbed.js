@@ -397,7 +397,9 @@ class Jbbed {
     // parse themeArgs (*)
     params.themeArgs = Jbbed.compare(params.themeArgs, defaults.themeArgs, -1, false, (v, k, d) => {
       switch( k ) {
-        case 'style' || 'icons' : 
+        // fall-through
+        case 'style':
+        case 'icons' : 
           v = v !== false && /[a-z0-9_-]+/gi.test(v) === false ? d[k] : v;
           break;
         case 'dirUri' : 
@@ -410,7 +412,9 @@ class Jbbed {
     // parse barsArgs (*)
     params.barArgs = Jbbed.compare(params.barArgs, defaults.barArgs, -1, false, (v, k, d) => {
       switch( k ) {
-        case 'keepDefault' || 'tiny' : 
+        // fall-through
+        case 'keepDefault':
+        case 'tiny' : 
           v = Boolean(v); 
           break;
         case 'selectiveRemove' : 
@@ -453,7 +457,10 @@ class Jbbed {
     // parse modalArgs (*)
     params.modalArgs = Jbbed.compare(params.modalArgs, defaults.modalArgs, -1, false, (v, k, d) => {
       switch( k ) {
-        case 'preview' || 'palette' || 'keepDefault' : 
+        // fall-through
+        case 'preview':
+        case 'palette':
+        case 'keepDefault': 
           v = Boolean(v); 
           break;
         case 'previewSentence' : 
@@ -461,7 +468,9 @@ class Jbbed {
             v = d[k]; 
           }
           break;
-        case 'previewColor' || 'previewTextColor' :
+        // fall-through
+        case 'previewColor':
+        case 'previewTextColor':
           if( v !== 'theme' && /(#[a-fA-F0-9]{6})/gi.test(v) === false ) {
             v = d[k];
           }
@@ -525,10 +534,14 @@ class Jbbed {
     // parse textareaArgs (*)
     params.textareaArgs = Jbbed.compare(params.textareaArgs, defaults.textareaArgs, -1, false, (v, k, d) => {
       switch(k) {
-        case 'cols' || 'rows' : 
+        // fall-through
+        case 'cols':
+        case 'rows' : 
           v = Jbbed.intVal(v);
           break;
-        case 'width' || 'height' :
+        // fall-through
+        case 'width':
+        case 'height' :
           if( /[0-9]+(em|px|pt|vw|%|rem)/gi.test(v) === false ) {
             v = d[k];
           }
@@ -548,12 +561,17 @@ class Jbbed {
     // parse previewArgs (*)
     params.previewArgs = Jbbed.compare(params.previewArgs, defaults.previewArgs, -1, false, (v, k, d) => {
       switch(k) {
-        case 'width' || 'height' :
+        // fall-through
+        case 'width':
+        case 'height' :
           if( /[0-9]+(em|px|pt|vw|%|rem)/gi.test(v) === false ) {
             v = d[k];
           }
           break;
-        case 'contentWrapP' || 'noWrapP' || 'noTagIntoTag' :
+        // fall-through
+        case 'contentWrapP':
+        case 'noWrapP':
+        case 'noTagIntoTag' :
           if( ! Array.isArray(v) || v.length === 0 ) {
             v = d[k];
           }
@@ -578,7 +596,9 @@ class Jbbed {
               v = d[k];
             }
             break;
-          case 'buttonHide' || 'buttonShow' : 
+          // fall-through
+          case 'buttonHide':
+          case 'buttonShow' : 
             if( v.length === 0 || /[^<>]+/gi.test(v) === false ) {
               v = d[k];
             }
