@@ -517,8 +517,8 @@
  * 
  * @param string $string // string to convert
  * @param array $args // array of arguments to pass. See class
- * @param bool $replace // check if you want replace or not
- * @param string $remove // tags to remove
+ * @param bool $replace // check if you want replace bars or not
+ * @param string $remove // tags to remove (separate by |)
  * 
  * @return string
  */
