@@ -200,6 +200,10 @@
      * @return void
      */
 	protected function _remove() {
+
+		if( strpos($this->remove, '|') === false ) {
+			return $this->args['tags'] = $this->remove;
+		}
 		
 		$removes = explode('|', $this->remove);
 	    
