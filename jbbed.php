@@ -529,9 +529,9 @@ function jbbed_convert( $string = '', $args = [], $replace = false, $remove = ''
 
 /**
  * Implements spoiler. Add this function in the header or body
- * @param int|string $slide
- * @param string $buttonShow
- * @param string $buttonHide
+ * @param int|string $slide // opening speed
+ * @param string $buttonShow // name of button show
+ * @param string $buttonHide // name of button hide
  */
 function jbbed_spoiler( $slide = 400, $buttonShow = 'Spoiler', $buttonHide = 'Hide') {
 	?>
